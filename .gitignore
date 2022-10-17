@@ -1,0 +1,10 @@
+/.env
+/secret_files
+/test_dbs/*
+/tests/.env
+/tests/secret_files
+/tests/test_dbs/*
+notes.txt
+todo.txt
+*.pem
+/.vscode
