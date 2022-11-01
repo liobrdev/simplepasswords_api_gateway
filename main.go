@@ -11,8 +11,8 @@ import (
 func main() {
 	var conf config.AppConfig
 
-	if err := config.LoadConfigFromEnvFile(&conf); err != nil {
-		log.Fatalln("Failed to load config from '.env' file:", err)
+	if err := config.LoadConfigFromEnv(&conf); err != nil {
+		log.Fatalln("Failed to load config from environment:", err)
 	}
 
 	app, dbs := app.CreateApp(&conf)
@@ -29,5 +29,5 @@ func main() {
 		log.Fatalln("Failed logger database auto-migrate:", err.Error())
 	}
 
-	app.Listen(conf.GO_FIBER_SERVER_HOST + conf.GO_FIBER_SERVER_PORT)
+	log.Fatal(app.Listen(conf.GO_FIBER_SERVER_HOST + ":" + conf.GO_FIBER_SERVER_PORT))
 }

@@ -13,8 +13,8 @@ import (
 func TestApp(t *testing.T) {
 	var conf config.AppConfig
 
-	if err := config.LoadConfigFromEnvFile(&conf); err != nil {
-		t.Fatal("Failed to load config from '.env' file:", err)
+	if err := config.LoadConfigFromEnv(&conf); err != nil {
+		t.Fatal("Failed to load config from environment:", err)
 	}
 
 	t.Run("is_behind_proxy", func(t *testing.T) {

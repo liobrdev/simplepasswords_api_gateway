@@ -33,6 +33,7 @@ func CreateApp(conf *config.AppConfig) (*fiber.App, *databases.Databases) {
 		TrustedProxies:          trustedProxies,
 		JSONEncoder:             json.Marshal,
 		JSONDecoder:             json.Unmarshal,
+		Prefork:                 true,
 	})
 
 	dbs := databases.Init(conf)

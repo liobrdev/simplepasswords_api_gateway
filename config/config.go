@@ -1,6 +1,7 @@
 package config
 
 import (
+	"bufio"
 	"log"
 	"os"
 	"reflect"
@@ -30,7 +31,7 @@ type AppConfig struct {
 	GO_FIBER_VAULTS_URL              string
 }
 
-type envFileAbsPaths struct {
+type envAbsPaths struct {
 	GO_FIBER_ENVIRONMENT             string
 	GO_FIBER_BEHIND_PROXY            string
 	GO_FIBER_PROXY_IP_ADDRESSES      string
@@ -51,53 +52,115 @@ type envFileAbsPaths struct {
 	GO_FIBER_VAULTS_URL              string
 }
 
-func (paths envFileAbsPaths) loadFileContentsToConf(conf *AppConfig) {
-	pathsValue := reflect.ValueOf(paths)
-	pathsType := pathsValue.Type()
-	confElem := reflect.ValueOf(conf).Elem()
+func getDefaultConfigValue(fieldName string) string {
+	var defaultConfigValue string
 
-	for i, fieldCount := 0, pathsValue.NumField(); i < fieldCount; i++ {
-		fieldName := pathsType.Field(i).Name
-		path := pathsValue.Field(i).Interface().(string)
+	if fieldName == "GO_FIBER_ENVIRONMENT" {
+		defaultConfigValue = "development"
+	} else if fieldName == "GO_FIBER_SERVER_HOST" {
+		defaultConfigValue = "127.0.0.1"
+	} else if fieldName == "GO_FIBER_SERVER_PORT" {
+		defaultConfigValue = "5050"
+	} else if fieldName == "GO_FIBER_VAULTS_URL" {
+		defaultConfigValue = "http://127.0.0.1:8080"
+	}
 
-		if path == "" {
-			log.Fatalln("Missing or empty environment variable:", fieldName)
-		}
+	return defaultConfigValue
+}
 
-		if contents, err := os.ReadFile(path); err != nil {
-			log.Fatalf(
-				"Error reading contents of '%s' from variable %s in '.env' file:\n%s",
-				path, fieldName, err,
-			)
-		} else if fieldName == "GO_FIBER_BEHIND_PROXY" {
-			if string(contents) == "true" {
-				conf.GO_FIBER_BEHIND_PROXY = true
-			} else {
-				conf.GO_FIBER_BEHIND_PROXY = false
-			}
-		} else if fieldName == "GO_FIBER_PROXY_IP_ADDRESSES" {
-			conf.GO_FIBER_PROXY_IP_ADDRESSES = strings.Split(string(contents), ",")
+func scanFileFirstLineToConf(
+	file *os.File,
+	path string,
+	fieldName string,
+	conf *AppConfig,
+	confElem *reflect.Value,
+) {
+	scanner := bufio.NewScanner(file)
+	scanner.Scan()
+
+	if contents := scanner.Text(); scanner.Err() != nil {
+		log.Fatalf(
+			"Error reading contents of '%s' from environment variable %s:\n%s",
+			path, fieldName, scanner.Err(),
+		)
+	} else if fieldName == "GO_FIBER_BEHIND_PROXY" {
+		if contents == "true" {
+			conf.GO_FIBER_BEHIND_PROXY = true
 		} else {
-			confElem.FieldByName(fieldName).SetString(string(contents))
+			conf.GO_FIBER_BEHIND_PROXY = false
 		}
+	} else if fieldName == "GO_FIBER_PROXY_IP_ADDRESSES" {
+		conf.GO_FIBER_PROXY_IP_ADDRESSES = strings.Split(contents, ",")
+	} else if contents == "" {
+		confElem.FieldByName(fieldName).SetString(getDefaultConfigValue(fieldName))
+	} else {
+		confElem.FieldByName(fieldName).SetString(contents)
 	}
 }
 
-func LoadConfigFromEnvFile(conf *AppConfig) (err error) {
+func loadFileContentsFromPathsToConf(
+	conf *AppConfig,
+	pathsType *reflect.Type,
+	pathsValue *reflect.Value,
+	fieldCount int,
+) {
+	confElem := reflect.ValueOf(conf).Elem()
+
+	for i := 0; i < fieldCount; i++ {
+		fieldName := (*pathsType).Field(i).Name
+		path := pathsValue.Field(i).Interface().(string)
+
+		if path == "" {
+			log.Fatal("Missing or empty environment variable: ", fieldName)
+		}
+
+		file, err := os.Open(path)
+
+		if err != nil {
+			log.Fatalf(
+				"Error opening '%s' from environment variable %s:\n%s", path, fieldName, err,
+			)
+		}
+
+		defer file.Close()
+
+		scanFileFirstLineToConf(file, path, fieldName, conf, &confElem)
+	}
+}
+
+func LoadConfigFromEnv(conf *AppConfig) (err error) {
+	viper.SetEnvPrefix("GO_FIBER")
 	viper.SetConfigFile("./.env")
 	viper.AutomaticEnv()
 
 	if err = viper.ReadInConfig(); err != nil {
-		return
+		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+			err = nil
+		} else {
+			return
+		}
 	}
 
-	var paths envFileAbsPaths
+	paths := envAbsPaths{}
+	pathsValue := reflect.ValueOf(paths)
+	pathsType := pathsValue.Type()
+	fieldCount := pathsValue.NumField()
+
+	for i, key, val := 0, "", ""; i < fieldCount; i++ {
+		key = pathsType.Field(i).Name
+
+		if val = os.Getenv(key); val != "" {
+			viper.Set(key, val)
+		}
+	}
 
 	if err = viper.Unmarshal(&paths); err != nil {
 		return
+	} else {
+		pathsValue = reflect.ValueOf(paths)
 	}
 
-	paths.loadFileContentsToConf(conf)
+	loadFileContentsFromPathsToConf(conf, &pathsType, &pathsValue, fieldCount)
 
 	return
 }
