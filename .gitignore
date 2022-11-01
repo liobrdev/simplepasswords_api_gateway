@@ -1,3 +1,4 @@
+/simplepasswords_api_gateway
 /.env
 /secret_files
 /test_dbs/*
