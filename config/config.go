@@ -58,11 +58,11 @@ func getDefaultConfigValue(fieldName string) string {
 	if fieldName == "GO_FIBER_ENVIRONMENT" {
 		defaultConfigValue = "development"
 	} else if fieldName == "GO_FIBER_SERVER_HOST" {
-		defaultConfigValue = "127.0.0.1"
+		defaultConfigValue = "localhost"
 	} else if fieldName == "GO_FIBER_SERVER_PORT" {
 		defaultConfigValue = "5050"
 	} else if fieldName == "GO_FIBER_VAULTS_URL" {
-		defaultConfigValue = "http://127.0.0.1:8080"
+		defaultConfigValue = "http://localhost:8080"
 	}
 
 	return defaultConfigValue
