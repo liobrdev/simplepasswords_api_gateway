@@ -1,0 +1,13 @@
+.dockerignore
+.env
+.gitignore
+.vscode
+Dockerfile
+LICENSE
+README.md
+secret_files
+test_dbs
+tests
+notes.txt
+todo.txt
+*.pem

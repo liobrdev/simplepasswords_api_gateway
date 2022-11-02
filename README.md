@@ -92,15 +92,15 @@ The resulting executable will be built with `GO_FIBER_ENVIRONMENT` set to `/path
 The scheme described above is particularly convenient for use with Docker Compose `secrets` configuration:
 
 ```yaml
-# docker-compose.yml
+# simplepasswords/docker-compose.yml
 
 version: '3.9'
 
 services:
     api_gateway:
         build:
-            context: ./api_gateway
-        command: ./simplepasswords_api_gateway
+            context: https://github.com/liobrdev/simplepasswords_api_gateway
+        command: go run main.go
         secrets:
             - redis_password
             - api_gateway_environment
@@ -142,18 +142,19 @@ services:
         ports:
             - 5050:5050
         depends_on:
-            - db_api_gateway
-            - db_logger
+            - api_gateway_db
+            - logger_db
             - redis
             - vaults
-    db_api_gateway:
+    api_gateway_db:
         # ...
-    db_logger:
+    logger_db:
         # ...
     redis:
         # ...
     vaults:
         # ...
+    # ...
 secrets:
     redis_password:
         file: ./secret_files/redis_password.txt
