@@ -21,7 +21,7 @@ func CreateApp(conf *config.AppConfig) (*fiber.App, *databases.Databases) {
 		if err := parseIPs(&conf.GO_FIBER_PROXY_IP_ADDRESSES); err != nil {
 			log.Fatal(err)
 		} else {
-			proxyHeader = "X-Forward-For"
+			proxyHeader = "X-Forwarded-For"
 			trustedProxies = conf.GO_FIBER_PROXY_IP_ADDRESSES
 		}
 	}
