@@ -189,7 +189,7 @@ func (h handler) CreateAccount(c *fiber.Ctx) error {
 		var err error
 
 		if h.Conf.GO_FIBER_ENVIRONMENT != "testing" {
-			if err = h.vaultsCreateUser(c, user.Slug); err != nil {
+			if err = h.vaultsCreateUser(user.Slug); err != nil {
 				return err
 			}
 		}
@@ -232,7 +232,7 @@ func (h handler) CreateAccount(c *fiber.Ctx) error {
 	})
 }
 
-func (h handler) vaultsCreateUser(c *fiber.Ctx, userSlug string) error {
+func (h handler) vaultsCreateUser(userSlug string) error {
 	reqBody := strings.NewReader(`{"user_slug":"` + userSlug + `"}`)
 
 	if resp, err := http.Post(
