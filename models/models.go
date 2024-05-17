@@ -9,6 +9,9 @@ type User struct {
 	Name            string    `json:"name" gorm:"not null"`
 	EmailAddress    string    `json:"email_address" gorm:"uniqueIndex;not null"`
 	EmailIsVerified bool      `json:"email_is_verified" gorm:"default:false;not null"`
+	PhoneNumber     string    `json:"phone_number" gorm:"not null"`
+	PhoneIsVerified bool      `json:"phone_is_verified" gorm:"default:false;not null"`
+	MfaIsEnabled    bool      `json:"mfa_is_enabled" gorm:"default:false;not null"`
 	CreatedAt       time.Time `json:"-" gorm:"autoCreateTime:nano;not null"`
 	UpdatedAt       time.Time `json:"-" gorm:"autoUpdateTime:nano;not null"`
 }
@@ -18,6 +21,9 @@ type DeactivatedUser struct {
 	Name            string    `gorm:"not null"`
 	EmailAddress    string    `gorm:"not null"`
 	EmailIsVerified bool      `gorm:"not null"`
+	PhoneNumber     string    `gorm:"not null"`
+	PhoneIsVerified bool      `gorm:"not null"`
+	MfaIsEnabled    bool      `gorm:"not null"`
 	CreatedAt       time.Time `gorm:"autoCreateTime:false;not null"`
 	UpdatedAt       time.Time `gorm:"autoUpdateTime:false;not null"`
 	DeactivatedAt   time.Time `gorm:"autoCreateTime:nano;not null"`
