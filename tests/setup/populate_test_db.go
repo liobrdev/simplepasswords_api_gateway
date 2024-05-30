@@ -3,15 +3,22 @@ package setup
 import (
 	"testing"
 
+	"github.com/liobrdev/simplepasswords_api_gateway/config"
 	"github.com/liobrdev/simplepasswords_api_gateway/databases"
 	"github.com/liobrdev/simplepasswords_api_gateway/models"
 )
 
-func populateTestDBApiGateway(t *testing.T, dbs *databases.Databases) (
-	*[]models.User,
-	*[]models.DeactivatedUser,
+func populateTestDBApiGateway(
+	t *testing.T, dbs *databases.Databases, conf *config.AppConfig,
+) (
+	users []models.User,
+	deactivatedUsers []models.DeactivatedUser,
+	validTokens []string,
+	expiredTokens []string,
 ) {
-	users := createTestUsers(t, dbs)
-	deactivatedUsers := createTestDeactivatedUsers(t, dbs)
-	return &users, &deactivatedUsers
+	users = createTestUsers(t, dbs)
+	deactivatedUsers = createTestDeactivatedUsers(t, dbs)
+	validTokens = createValidTestClientSessions(&users, t, dbs, conf)
+	expiredTokens = createExpiredTestClientSessions(&users, t, dbs, conf)
+	return
 }

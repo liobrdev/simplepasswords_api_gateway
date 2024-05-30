@@ -27,7 +27,7 @@ func QueryTestLogLatest(t *testing.T, db *gorm.DB, log *models.Log) {
 }
 
 func QueryTestClientSessionLatest(t *testing.T, db *gorm.DB, session *models.ClientSession) {
-	if result := db.Last(&session); result.Error != nil {
+	if result := db.Order("created_at DESC").Limit(1).Find(&session); result.Error != nil {
 		t.Fatalf("Latest client session query failed: %s", result.Error.Error())
 	}
 }

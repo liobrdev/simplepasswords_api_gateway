@@ -1,10 +1,8 @@
-package auth
+package utils
 
 import (
 	"strings"
 	"unicode"
-
-	"github.com/liobrdev/simplepasswords_api_gateway/utils"
 )
 
 func ContainsUppercase(s string) bool {
@@ -39,7 +37,7 @@ func ContainsNumber(s string) bool {
 
 func ContainsSpecialChar(s string) bool {
 	for i, n := 0, len(s); i < n; i++ {
-		if strings.Contains(utils.SPECIAL_CHARS, string(s[i])) {
+		if strings.Contains(SPECIAL_CHARS, string(s[i])) {
 			return true
 		}
 	}

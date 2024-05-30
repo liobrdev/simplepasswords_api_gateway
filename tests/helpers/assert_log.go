@@ -9,7 +9,6 @@ import (
 )
 
 func AssertLog(t *testing.T, expected *models.Log, actual *models.Log) {
-	require.Equal(t, expected.Caller, actual.Caller)
 	require.Equal(t, expected.ClientIP, actual.ClientIP)
 	require.Equal(t, expected.ClientOperation, actual.ClientOperation)
 	require.Equal(t, expected.Detail, actual.Detail)

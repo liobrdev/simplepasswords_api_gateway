@@ -6,6 +6,7 @@ import (
 	"os"
 	"reflect"
 	"strings"
+	"testing"
 
 	"github.com/spf13/viper"
 )
@@ -29,6 +30,7 @@ type AppConfig struct {
 	GO_FIBER_SERVER_HOST             string
 	GO_FIBER_SERVER_PORT             string
 	GO_FIBER_VAULTS_URL              string
+	GO_TESTING_CONTEXT               *testing.T
 }
 
 type envAbsPaths struct {
@@ -68,20 +70,15 @@ func getDefaultConfigValue(fieldName string) string {
 	return defaultConfigValue
 }
 
-func scanFileFirstLineToConf(
-	file *os.File,
-	path string,
-	fieldName string,
-	conf *AppConfig,
-	confElem *reflect.Value,
-) {
+func scanFileFirstLineToConf(file *os.File, path string, fieldName string, conf *AppConfig,
+confElem *reflect.Value) {
 	scanner := bufio.NewScanner(file)
 	scanner.Scan()
 
 	if contents := scanner.Text(); scanner.Err() != nil {
 		log.Fatalf(
-			"Error reading contents of '%s' from environment variable %s:\n%s",
-			path, fieldName, scanner.Err(),
+			"Error reading contents of '%s' from environment variable %s:\n%s", path, fieldName,
+			scanner.Err(),
 		)
 	} else if fieldName == "GO_FIBER_BEHIND_PROXY" {
 		if contents == "true" {
@@ -98,12 +95,8 @@ func scanFileFirstLineToConf(
 	}
 }
 
-func loadFileContentsFromPathsToConf(
-	conf *AppConfig,
-	pathsType *reflect.Type,
-	pathsValue *reflect.Value,
-	fieldCount int,
-) {
+func loadFileContentsFromPathsToConf(conf *AppConfig, pathsType *reflect.Type,
+pathsValue *reflect.Value, fieldCount int) {
 	confElem := reflect.ValueOf(conf).Elem()
 
 	for i := 0; i < fieldCount; i++ {

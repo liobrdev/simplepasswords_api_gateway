@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/liobrdev/simplepasswords_api_gateway/config"
-	"github.com/liobrdev/simplepasswords_api_gateway/controllers/auth"
+	"github.com/liobrdev/simplepasswords_api_gateway/controllers"
 	"github.com/liobrdev/simplepasswords_api_gateway/databases"
 	"github.com/liobrdev/simplepasswords_api_gateway/models"
 	"github.com/liobrdev/simplepasswords_api_gateway/tests/helpers"
@@ -22,10 +22,7 @@ import (
 )
 
 func testCreateAccount(
-	t *testing.T,
-	app *fiber.App,
-	dbs *databases.Databases,
-	conf *config.AppConfig,
+	t *testing.T, app *fiber.App, dbs *databases.Databases, conf *config.AppConfig,
 ) {
 	var clientIP string
 
@@ -41,9 +38,7 @@ func testCreateAccount(
 
 	t.Run("empty_body_400_bad_request", func(t *testing.T) {
 		testCreateAccountClientError(
-			t, app, dbs, "", http.StatusBadRequest, utils.ErrorBadRequest, nil, nil,
-			&models.Log{
-				Caller:          auth.CreateAccountCaller,
+			t, app, dbs, "", 400, utils.ErrorBadRequest, nil, nil, &models.Log{
 				ClientIP:        clientIP,
 				ClientOperation: utils.CreateAccount,
 				Detail:          "invalid character '\x00' looking for beginning of value",
@@ -56,9 +51,7 @@ func testCreateAccount(
 
 	t.Run("array_body_400_bad_request", func(t *testing.T) {
 		testCreateAccountClientError(
-			t, app, dbs, "[]", http.StatusBadRequest, utils.ErrorBadRequest, nil, nil,
-			&models.Log{
-				Caller:          auth.CreateAccountCaller,
+			t, app, dbs, "[]", 400, utils.ErrorBadRequest, nil, nil, &models.Log{
 				ClientIP:        clientIP,
 				ClientOperation: utils.CreateAccount,
 				Detail:          "invalid character '[' looking for beginning of value",
@@ -69,9 +62,7 @@ func testCreateAccount(
 		)
 
 		testCreateAccountClientError(
-			t, app, dbs, "[{}]", http.StatusBadRequest, utils.ErrorBadRequest, nil, nil,
-			&models.Log{
-				Caller:          auth.CreateAccountCaller,
+			t, app, dbs, "[{}]", 400, utils.ErrorBadRequest, nil, nil, &models.Log{
 				ClientIP:        clientIP,
 				ClientOperation: utils.CreateAccount,
 				Detail:          "invalid character '[' looking for beginning of value",
@@ -81,14 +72,12 @@ func testCreateAccount(
 			},
 		)
 
-		body := `[` +
-			fmt.Sprintf(bodyFmt, "JDoe", "jdoe@email.co", helpers.VALID_PW, helpers.VALID_PW) +
-			`]`
+		body := `[` + fmt.Sprintf(
+			bodyFmt, "JDoe", "jdoe@email.co", helpers.VALID_PW, helpers.VALID_PW,
+		) + `]`
 
 		testCreateAccountClientError(
-			t, app, dbs, body, http.StatusBadRequest, utils.ErrorBadRequest, nil, nil,
-			&models.Log{
-				Caller:          auth.CreateAccountCaller,
+			t, app, dbs, body, 400, utils.ErrorBadRequest, nil, nil, &models.Log{
 				ClientIP:        clientIP,
 				ClientOperation: utils.CreateAccount,
 				Detail:          "invalid character '[' looking for beginning of value",
@@ -101,9 +90,7 @@ func testCreateAccount(
 
 	t.Run("null_body_400_bad_request", func(t *testing.T) {
 		testCreateAccountClientError(
-			t, app, dbs, "null", http.StatusBadRequest, utils.ErrorBadRequest, nil, nil,
-			&models.Log{
-				Caller:          auth.CreateAccountCaller,
+			t, app, dbs, "null", 400, utils.ErrorBadRequest, nil, nil, &models.Log{
 				ClientIP:        clientIP,
 				ClientOperation: utils.CreateAccount,
 				Detail:          "",
@@ -116,9 +103,7 @@ func testCreateAccount(
 
 	t.Run("boolean_body_400_bad_request", func(t *testing.T) {
 		testCreateAccountClientError(
-			t, app, dbs, "true", http.StatusBadRequest, utils.ErrorBadRequest, nil, nil,
-			&models.Log{
-				Caller:          auth.CreateAccountCaller,
+			t, app, dbs, "true", 400, utils.ErrorBadRequest, nil, nil, &models.Log{
 				ClientIP:        clientIP,
 				ClientOperation: utils.CreateAccount,
 				Detail:          "invalid character 't' looking for beginning of value",
@@ -129,9 +114,7 @@ func testCreateAccount(
 		)
 
 		testCreateAccountClientError(
-			t, app, dbs, "false", http.StatusBadRequest, utils.ErrorBadRequest, nil, nil,
-			&models.Log{
-				Caller:          auth.CreateAccountCaller,
+			t, app, dbs, "false", 400, utils.ErrorBadRequest, nil, nil, &models.Log{
 				ClientIP:        clientIP,
 				ClientOperation: utils.CreateAccount,
 				Detail:          "invalid character 'f' looking for beginning of value",
@@ -144,9 +127,8 @@ func testCreateAccount(
 
 	t.Run("string_body_400_bad_request", func(t *testing.T) {
 		testCreateAccountClientError(
-			t, app, dbs, `"Valid JSON, but not an object."`, http.StatusBadRequest,
-			utils.ErrorBadRequest, nil, nil, &models.Log{
-				Caller:          auth.CreateAccountCaller,
+			t, app, dbs, `"Valid JSON, but not an object."`, 400, utils.ErrorBadRequest, nil, nil,
+			&models.Log{
 				ClientIP:        clientIP,
 				ClientOperation: utils.CreateAccount,
 				Detail:          `invalid character '"' looking for beginning of value`,
@@ -159,9 +141,7 @@ func testCreateAccount(
 
 	t.Run("empty_object_body_400_bad_request", func(t *testing.T) {
 		testCreateAccountClientError(
-			t, app, dbs, "{}", http.StatusBadRequest, utils.ErrorBadRequest, nil, nil,
-			&models.Log{
-				Caller:          auth.CreateAccountCaller,
+			t, app, dbs, "{}", 400, utils.ErrorBadRequest, nil, nil, &models.Log{
 				ClientIP:        clientIP,
 				ClientOperation: utils.CreateAccount,
 				Detail:          "",
@@ -179,9 +159,7 @@ func testCreateAccount(
 		)
 
 		testCreateAccountClientError(
-			t, app, dbs, body, http.StatusBadRequest, utils.ErrorBadRequest, nil, nil,
-			&models.Log{
-				Caller:          auth.CreateAccountCaller,
+			t, app, dbs, body, 400, utils.ErrorBadRequest, nil, nil, &models.Log{
 				ClientIP:        clientIP,
 				ClientOperation: utils.CreateAccount,
 				Detail:          "",
@@ -199,9 +177,7 @@ func testCreateAccount(
 		)
 
 		testCreateAccountClientError(
-			t, app, dbs, body, http.StatusBadRequest, utils.ErrorBadRequest, nil, nil,
-			&models.Log{
-				Caller:          auth.CreateAccountCaller,
+			t, app, dbs, body, 400, utils.ErrorBadRequest, nil, nil, &models.Log{
 				ClientIP:        clientIP,
 				ClientOperation: utils.CreateAccount,
 				Detail:          "",
@@ -216,9 +192,7 @@ func testCreateAccount(
 		body := fmt.Sprintf(bodyFmt, "", "jdoe@email.co", helpers.VALID_PW, helpers.VALID_PW)
 
 		testCreateAccountClientError(
-			t, app, dbs, body, http.StatusBadRequest, utils.ErrorBadRequest, nil, nil,
-			&models.Log{
-				Caller:          auth.CreateAccountCaller,
+			t, app, dbs, body, 400, utils.ErrorBadRequest, nil, nil, &models.Log{
 				ClientIP:        clientIP,
 				ClientOperation: utils.CreateAccount,
 				Detail:          "",
@@ -238,9 +212,7 @@ func testCreateAccount(
 			)
 
 			testCreateAccountClientError(
-				t, app, dbs, body, http.StatusBadRequest, utils.ErrorBadRequest, nil, nil,
-				&models.Log{
-					Caller:          auth.CreateAccountCaller,
+				t, app, dbs, body, 400, utils.ErrorBadRequest, nil, nil, &models.Log{
 					ClientIP:        clientIP,
 					ClientOperation: utils.CreateAccount,
 					Detail:          name,
@@ -259,9 +231,7 @@ func testCreateAccount(
 		)
 
 		testCreateAccountClientError(
-			t, app, dbs, body, http.StatusBadRequest, utils.ErrorBadRequest, nil, nil,
-			&models.Log{
-				Caller:          auth.CreateAccountCaller,
+			t, app, dbs, body, 400, utils.ErrorBadRequest, nil, nil, &models.Log{
 				ClientIP:        clientIP,
 				ClientOperation: utils.CreateAccount,
 				Detail:          "",
@@ -279,9 +249,7 @@ func testCreateAccount(
 		)
 
 		testCreateAccountClientError(
-			t, app, dbs, body, http.StatusBadRequest, utils.ErrorBadRequest, nil, nil,
-			&models.Log{
-				Caller:          auth.CreateAccountCaller,
+			t, app, dbs, body, 400, utils.ErrorBadRequest, nil, nil, &models.Log{
 				ClientIP:        clientIP,
 				ClientOperation: utils.CreateAccount,
 				Detail:          "",
@@ -296,9 +264,7 @@ func testCreateAccount(
 		body := fmt.Sprintf(bodyFmt, "JDoe", "", helpers.VALID_PW, helpers.VALID_PW)
 
 		testCreateAccountClientError(
-			t, app, dbs, body, http.StatusBadRequest, utils.ErrorBadRequest, nil, nil,
-			&models.Log{
-				Caller:          auth.CreateAccountCaller,
+			t, app, dbs, body, 400, utils.ErrorBadRequest, nil, nil, &models.Log{
 				ClientIP:        clientIP,
 				ClientOperation: utils.CreateAccount,
 				Detail:          "",
@@ -316,9 +282,7 @@ func testCreateAccount(
 			body := fmt.Sprintf(bodyFmt, "JDoe", email, helpers.VALID_PW, helpers.VALID_PW)
 
 			testCreateAccountClientError(
-				t, app, dbs, body, http.StatusBadRequest, utils.ErrorBadRequest, nil, nil,
-				&models.Log{
-					Caller:          auth.CreateAccountCaller,
+				t, app, dbs, body, 400, utils.ErrorBadRequest, nil, nil, &models.Log{
 					ClientIP:        clientIP,
 					ClientOperation: utils.CreateAccount,
 					Detail:          email,
@@ -337,9 +301,7 @@ func testCreateAccount(
 		)
 
 		testCreateAccountClientError(
-			t, app, dbs, body, http.StatusBadRequest, utils.ErrorBadRequest, nil, nil,
-			&models.Log{
-				Caller:          auth.CreateAccountCaller,
+			t, app, dbs, body, 400, utils.ErrorBadRequest, nil, nil, &models.Log{
 				ClientIP:        clientIP,
 				ClientOperation: utils.CreateAccount,
 				Detail:          "",
@@ -356,9 +318,7 @@ func testCreateAccount(
 		)
 
 		testCreateAccountClientError(
-			t, app, dbs, body, http.StatusBadRequest, utils.ErrorBadRequest, nil, nil,
-			&models.Log{
-				Caller:          auth.CreateAccountCaller,
+			t, app, dbs, body, 400, utils.ErrorBadRequest, nil, nil, &models.Log{
 				ClientIP:        clientIP,
 				ClientOperation: utils.CreateAccount,
 				Detail:          "",
@@ -373,9 +333,7 @@ func testCreateAccount(
 		body := fmt.Sprintf(bodyFmt, "JDoe", "jdoe@email.co", "jdoe@email.co", "jdoe@email.co")
 
 		testCreateAccountClientError(
-			t, app, dbs, body, http.StatusBadRequest, utils.ErrorBadRequest, nil, nil,
-			&models.Log{
-				Caller:          auth.CreateAccountCaller,
+			t, app, dbs, body, 400, utils.ErrorBadRequest, nil, nil, &models.Log{
 				ClientIP:        clientIP,
 				ClientOperation: utils.CreateAccount,
 				Detail:          "Password is email",
@@ -394,9 +352,7 @@ func testCreateAccount(
 			body := fmt.Sprintf(bodyFmt, "JDoe", "jdoe@email.co", password, password)
 
 			testCreateAccountClientError(
-				t, app, dbs, body, http.StatusBadRequest, utils.ErrorBadRequest, nil, nil,
-				&models.Log{
-					Caller:          auth.CreateAccountCaller,
+				t, app, dbs, body, 400, utils.ErrorBadRequest, nil, nil, &models.Log{
 					ClientIP:        clientIP,
 					ClientOperation: utils.CreateAccount,
 					Detail:          "Too long: 257 > 256",
@@ -416,9 +372,7 @@ func testCreateAccount(
 			body := fmt.Sprintf(bodyFmt, "JDoe", "jdoe@email.co", password, password)
 
 			testCreateAccountClientError(
-				t, app, dbs, body, http.StatusBadRequest, utils.ErrorBadRequest, nil, nil,
-				&models.Log{
-					Caller:          auth.CreateAccountCaller,
+				t, app, dbs, body, 400, utils.ErrorBadRequest, nil, nil, &models.Log{
 					ClientIP:        clientIP,
 					ClientOperation: utils.CreateAccount,
 					Detail:          "Too short: 15 < 16",
@@ -435,9 +389,7 @@ func testCreateAccount(
 		body := fmt.Sprintf(bodyFmt, "JDoe", "jdoe@email.co", password, password)
 
 		testCreateAccountClientError(
-			t, app, dbs, body, http.StatusBadRequest, utils.ErrorBadRequest, nil, nil,
-			&models.Log{
-				Caller:          auth.CreateAccountCaller,
+			t, app, dbs, body, 400, utils.ErrorBadRequest, nil, nil, &models.Log{
 				ClientIP:        clientIP,
 				ClientOperation: utils.CreateAccount,
 				Detail:          "Missing uppercase",
@@ -453,9 +405,7 @@ func testCreateAccount(
 		body := fmt.Sprintf(bodyFmt, "JDoe", "jdoe@email.co", password, password)
 
 		testCreateAccountClientError(
-			t, app, dbs, body, http.StatusBadRequest, utils.ErrorBadRequest, nil, nil,
-			&models.Log{
-				Caller:          auth.CreateAccountCaller,
+			t, app, dbs, body, 400, utils.ErrorBadRequest, nil, nil, &models.Log{
 				ClientIP:        clientIP,
 				ClientOperation: utils.CreateAccount,
 				Detail:          "Missing lowercase",
@@ -471,9 +421,7 @@ func testCreateAccount(
 		body := fmt.Sprintf(bodyFmt, "JDoe", "jdoe@email.co", password, password)
 
 		testCreateAccountClientError(
-			t, app, dbs, body, http.StatusBadRequest, utils.ErrorBadRequest, nil, nil,
-			&models.Log{
-				Caller:          auth.CreateAccountCaller,
+			t, app, dbs, body, 400, utils.ErrorBadRequest, nil, nil, &models.Log{
 				ClientIP:        clientIP,
 				ClientOperation: utils.CreateAccount,
 				Detail:          "Missing number",
@@ -489,9 +437,7 @@ func testCreateAccount(
 		body := fmt.Sprintf(bodyFmt, "JDoe", "jdoe@email.co", password, password)
 
 		testCreateAccountClientError(
-			t, app, dbs, body, http.StatusBadRequest, utils.ErrorBadRequest, nil, nil,
-			&models.Log{
-				Caller:          auth.CreateAccountCaller,
+			t, app, dbs, body, 400, utils.ErrorBadRequest, nil, nil, &models.Log{
 				ClientIP:        clientIP,
 				ClientOperation: utils.CreateAccount,
 				Detail:          "Missing special char",
@@ -507,9 +453,7 @@ func testCreateAccount(
 		body := fmt.Sprintf(bodyFmt, "JDoe", "jdoe@email.co", password, password)
 
 		testCreateAccountClientError(
-			t, app, dbs, body, http.StatusBadRequest, utils.ErrorBadRequest, nil, nil,
-			&models.Log{
-				Caller:          auth.CreateAccountCaller,
+			t, app, dbs, body, 400, utils.ErrorBadRequest, nil, nil, &models.Log{
 				ClientIP:        clientIP,
 				ClientOperation: utils.CreateAccount,
 				Detail:          "Has whitespace",
@@ -522,9 +466,9 @@ func testCreateAccount(
 
 	t.Run("valid_body_email_already_exists_409_conflict", func(t *testing.T) {
 		setup.SetUpLogger(t, dbs)
-		users, _ := setup.SetUpApiGatewayWithData(t, dbs)
+		users, _, _, _ := setup.SetUpApiGatewayWithData(t, dbs, conf)
 
-		email := (*users)[0].EmailAddress
+		email := users[0].EmailAddress
 		body := fmt.Sprintf(bodyFmt, "JDoe", email, helpers.VALID_PW, helpers.VALID_PW)
 
 		testCreateAccountClientError(
@@ -553,14 +497,8 @@ func testCreateAccount(
 }
 
 func testCreateAccountClientError(
-	t *testing.T,
-	app *fiber.App,
-	dbs *databases.Databases,
-	body string,
-	expectedStatus int,
-	expectedDetail string,
-	expectedFieldErrors map[string][]string,
-	expectedNonFieldErrors []string,
+	t *testing.T, app *fiber.App, dbs *databases.Databases, body string, expectedStatus int,
+	expectedDetail string, expectedFieldErrors map[string][]string, expectedNonFieldErrors []string,
 	expectedLog *models.Log,
 ) {
 	resp := newRequestCreateAccount(t, app, body)
@@ -580,11 +518,7 @@ func testCreateAccountClientError(
 }
 
 func testCreateAccountSuccess(
-	t *testing.T,
-	app *fiber.App,
-	dbs *databases.Databases,
-	body string,
-	email string,
+	t *testing.T, app *fiber.App, dbs *databases.Databases, body string, email string,
 ) {
 	setup.SetUpApiGateway(t, dbs)
 
@@ -607,7 +541,7 @@ func testCreateAccountSuccess(
 	if respBody, err := io.ReadAll(resp.Body); err != nil {
 		t.Fatalf("Read response body failed: %s", err.Error())
 	} else {
-		var createAcctRespBody auth.CreateAccountResponseBody
+		var createAcctRespBody controllers.CreateAccountResponseBody
 
 		if err := json.Unmarshal(respBody, &createAcctRespBody); err != nil {
 			t.Fatalf("JSON unmarshal failed: %s", err.Error())
@@ -628,6 +562,8 @@ func testCreateAccountSuccess(
 		require.Equal(t, false, createAcctRespBody.User.PhoneIsVerified)
 		require.Equal(t, user.MfaIsEnabled, createAcctRespBody.User.MfaIsEnabled)
 		require.Equal(t, false, createAcctRespBody.User.MfaIsEnabled)
+		require.Equal(t, user.IsActive, createAcctRespBody.User.IsActive)
+		require.Equal(t, true, createAcctRespBody.User.IsActive)
 		require.Empty(t, createAcctRespBody.User.CreatedAt)
 		require.Empty(t, createAcctRespBody.User.UpdatedAt)
 		require.Empty(t, createAcctRespBody.User.PasswordSalt)
@@ -646,6 +582,7 @@ func newRequestCreateAccount(t *testing.T, app *fiber.App, body string) *http.Re
 	req := httptest.NewRequest(http.MethodPost, "/api/auth/create_account", reqBody)
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("X-Forwarded-For", helpers.CLIENT_IP)
+	req.Header.Set("Client-Operation", utils.CreateAccount)
 
 	resp, err := app.Test(req)
 

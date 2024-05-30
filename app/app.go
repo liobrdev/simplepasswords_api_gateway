@@ -37,15 +37,15 @@ func CreateApp(conf *config.AppConfig) (*fiber.App, *databases.Databases) {
 	})
 
 	dbs := databases.Init(conf)
-	routes.RegisterAPI(app, dbs, conf)
+	routes.Register(app, dbs, conf)
 
 	return app, dbs
 }
 
 func parseIPs(ipStrings *[]string) error {
-	for i, n := 0, len(*ipStrings); i < n; i++ {
-		if net.ParseIP((*ipStrings)[i]) == nil {
-			return fmt.Errorf("invalid IP: %s", (*ipStrings)[i])
+	for _, s := range (*ipStrings) {
+		if net.ParseIP(s) == nil {
+			return fmt.Errorf("invalid IP: %s", s)
 		}
 	}
 

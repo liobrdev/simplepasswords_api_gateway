@@ -1,6 +1,9 @@
-package auth
+package controllers
 
 import (
+	"runtime"
+	"strconv"
+
 	"github.com/gofiber/fiber/v2"
 
 	"github.com/liobrdev/simplepasswords_api_gateway/config"
@@ -8,29 +11,22 @@ import (
 	"github.com/liobrdev/simplepasswords_api_gateway/models"
 )
 
-type handler struct {
+type Handler struct {
 	DBs  *databases.Databases
 	Conf *config.AppConfig
 }
 
-func (h handler) createLog(
-	c *fiber.Ctx,
-	caller string,
-	clientOperation string,
-	detail string,
-	extra string,
-	level string,
-	message string,
-) {
+func (H Handler) createLog(c *fiber.Ctx, caller string, clientOperation string, detail string,
+extra string, level string, message string) {
 	var clientIP string
 
-	if h.Conf.GO_FIBER_BEHIND_PROXY {
+	if H.Conf.GO_FIBER_BEHIND_PROXY {
 		clientIP = c.Get("X-Forwarded-For")
 	} else {
 		clientIP = c.IP()
 	}
 
-	h.DBs.Logger.Create(&models.Log{
+	H.DBs.Logger.Create(&models.Log{
 		Caller:          caller,
 		ClientIP:        clientIP,
 		ClientOperation: clientOperation,
@@ -43,9 +39,12 @@ func (h handler) createLog(
 	})
 }
 
-func RegisterAuth(api *fiber.Router, dbs *databases.Databases, conf *config.AppConfig) {
-	h := handler{dbs, conf}
-	authApi := (*api).Group("/auth")
-	authApi.Post("/create_account", h.CreateAccount)
-	authApi.Post("/log_in_account", h.LogInAccount)
+func (H Handler) logger(c *fiber.Ctx, clientOperation string, detail string, extra string,
+level string, message string) {
+	_, file, line, _ := runtime.Caller(1)
+
+	H.createLog(
+		c, file + ":" + strconv.FormatInt(int64(line), 10), clientOperation, detail, extra, level,
+		message,
+	)
 }
