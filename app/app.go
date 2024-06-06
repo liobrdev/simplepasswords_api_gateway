@@ -13,7 +13,7 @@ import (
 	"github.com/liobrdev/simplepasswords_api_gateway/routes"
 )
 
-func CreateApp(conf *config.AppConfig) (*fiber.App, *databases.Databases) {
+func CreateApp(conf *config.AppConfig) (app *fiber.App, dbs *databases.Databases) {
 	var proxyHeader string
 	var trustedProxies []string
 
@@ -26,7 +26,7 @@ func CreateApp(conf *config.AppConfig) (*fiber.App, *databases.Databases) {
 		}
 	}
 
-	app := fiber.New(fiber.Config{
+	app = fiber.New(fiber.Config{
 		CaseSensitive:           true,
 		EnableTrustedProxyCheck: conf.GO_FIBER_BEHIND_PROXY,
 		ProxyHeader:             proxyHeader,
@@ -36,7 +36,7 @@ func CreateApp(conf *config.AppConfig) (*fiber.App, *databases.Databases) {
 		Prefork:                 true,
 	})
 
-	dbs := databases.Init(conf)
+	dbs = databases.Init(conf)
 	routes.Register(app, dbs, conf)
 
 	return app, dbs
