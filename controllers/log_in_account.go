@@ -31,9 +31,7 @@ func (H Handler) LogInAccount(c *fiber.Ctx) error {
 	}
 
 	if body.Email == "" || len(body.Email) > 256 {
-		H.logger(c, utils.LogInAccount, body.Email, "", "warn",
-			utils.ErrorAcctEmail,
-		)
+		H.logger(c, utils.LogInAccount, body.Email, "", "warn", utils.ErrorAcctEmail)
 
 		return utils.RespondWithError(c, 400, utils.ErrorBadRequest, nil, nil)
 	}

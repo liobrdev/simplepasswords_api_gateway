@@ -8,12 +8,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/goccy/go-json"
 	"github.com/gofiber/fiber/v2"
 	"github.com/stretchr/testify/require"
 
 	"github.com/liobrdev/simplepasswords_api_gateway/config"
-	"github.com/liobrdev/simplepasswords_api_gateway/controllers"
 	"github.com/liobrdev/simplepasswords_api_gateway/databases"
 	"github.com/liobrdev/simplepasswords_api_gateway/models"
 	"github.com/liobrdev/simplepasswords_api_gateway/tests/helpers"
@@ -21,7 +19,7 @@ import (
 	"github.com/liobrdev/simplepasswords_api_gateway/utils"
 )
 
-func testLogInAccount(t *testing.T, app *fiber.App, dbs *databases.Databases,
+func testDeactivateAccount(t *testing.T, app *fiber.App, dbs *databases.Databases,
 conf *config.AppConfig) {
 	var clientIP string
 
@@ -34,12 +32,16 @@ conf *config.AppConfig) {
 	bodyFmt := `{"email":"%s","password":"%s"}`
 
 	setup.SetUpLogger(t, dbs)
+	users, validTokens, _ := setup.SetUpApiGatewayWithData(t, dbs, conf)
+
+	validAuthHeader := "Token " + validTokens[0]
 
 	t.Run("empty_body_400_bad_request", func(t *testing.T) {
-		testLogInAccountClientError(
-			t, app, dbs, "", 400, utils.ErrorBadRequest, nil, nil, &models.Log{
+		testDeactivateAccountClientError(
+			t, app, dbs, validAuthHeader, "", users[0].Slug, 400, utils.ErrorBadRequest, nil, nil,
+			&models.Log{
 				ClientIP:        clientIP,
-				ClientOperation: utils.LogInAccount,
+				ClientOperation: utils.DeactivateAccount,
 				Detail:          "invalid character '\x00' looking for beginning of value",
 				Level:           "warn",
 				Message:         utils.ErrorParse,
@@ -49,10 +51,11 @@ conf *config.AppConfig) {
 	})
 
 	t.Run("array_body_400_bad_request", func(t *testing.T) {
-		testLogInAccountClientError(
-			t, app, dbs, "[]", 400, utils.ErrorBadRequest, nil, nil, &models.Log{
+		testDeactivateAccountClientError(
+			t, app, dbs, validAuthHeader, "[]", users[0].Slug, 400, utils.ErrorBadRequest, nil, nil,
+			&models.Log{
 				ClientIP:        clientIP,
-				ClientOperation: utils.LogInAccount,
+				ClientOperation: utils.DeactivateAccount,
 				Detail:          "invalid character '[' looking for beginning of value",
 				Level:           "warn",
 				Message:         utils.ErrorParse,
@@ -60,10 +63,11 @@ conf *config.AppConfig) {
 			},
 		)
 
-		testLogInAccountClientError(
-			t, app, dbs, "[{}]", 400, utils.ErrorBadRequest, nil, nil, &models.Log{
+		testDeactivateAccountClientError(
+			t, app, dbs, validAuthHeader, "[{}]", users[0].Slug, 400, utils.ErrorBadRequest, nil, nil,
+			&models.Log{
 				ClientIP:        clientIP,
-				ClientOperation: utils.LogInAccount,
+				ClientOperation: utils.DeactivateAccount,
 				Detail:          "invalid character '[' looking for beginning of value",
 				Level:           "warn",
 				Message:         utils.ErrorParse,
@@ -73,10 +77,11 @@ conf *config.AppConfig) {
 
 		body := `[` + fmt.Sprintf(bodyFmt, "jane.doe@email.co", helpers.VALID_PW) + `]`
 
-		testLogInAccountClientError(
-			t, app, dbs, body, 400, utils.ErrorBadRequest, nil, nil, &models.Log{
+		testDeactivateAccountClientError(
+			t, app, dbs, validAuthHeader, body, users[0].Slug, 400, utils.ErrorBadRequest, nil, nil,
+			&models.Log{
 				ClientIP:        clientIP,
-				ClientOperation: utils.LogInAccount,
+				ClientOperation: utils.DeactivateAccount,
 				Detail:          "invalid character '[' looking for beginning of value",
 				Level:           "warn",
 				Message:         utils.ErrorParse,
@@ -86,10 +91,11 @@ conf *config.AppConfig) {
 	})
 
 	t.Run("null_body_400_bad_request", func(t *testing.T) {
-		testLogInAccountClientError(
-			t, app, dbs, "null", 400, utils.ErrorBadRequest, nil, nil, &models.Log{
+		testDeactivateAccountClientError(
+			t, app, dbs, validAuthHeader, "null", users[0].Slug, 400, utils.ErrorBadRequest, nil, nil,
+			&models.Log{
 				ClientIP:        clientIP,
-				ClientOperation: utils.LogInAccount,
+				ClientOperation: utils.DeactivateAccount,
 				Detail:          "",
 				Level:           "warn",
 				Message:         utils.ErrorAcctEmail,
@@ -99,10 +105,11 @@ conf *config.AppConfig) {
 	})
 
 	t.Run("boolean_body_400_bad_request", func(t *testing.T) {
-		testLogInAccountClientError(
-			t, app, dbs, "true", 400, utils.ErrorBadRequest, nil, nil, &models.Log{
+		testDeactivateAccountClientError(
+			t, app, dbs, validAuthHeader, "true", users[0].Slug, 400, utils.ErrorBadRequest, nil, nil,
+			&models.Log{
 				ClientIP:        clientIP,
-				ClientOperation: utils.LogInAccount,
+				ClientOperation: utils.DeactivateAccount,
 				Detail:          "invalid character 't' looking for beginning of value",
 				Level:           "warn",
 				Message:         utils.ErrorParse,
@@ -110,10 +117,11 @@ conf *config.AppConfig) {
 			},
 		)
 
-		testLogInAccountClientError(
-			t, app, dbs, "false", 400, utils.ErrorBadRequest, nil, nil, &models.Log{
+		testDeactivateAccountClientError(
+			t, app, dbs, validAuthHeader, "false", users[0].Slug, 400, utils.ErrorBadRequest, nil, nil,
+			&models.Log{
 				ClientIP:        clientIP,
-				ClientOperation: utils.LogInAccount,
+				ClientOperation: utils.DeactivateAccount,
 				Detail:          "invalid character 'f' looking for beginning of value",
 				Level:           "warn",
 				Message:         utils.ErrorParse,
@@ -123,11 +131,11 @@ conf *config.AppConfig) {
 	})
 
 	t.Run("string_body_400_bad_request", func(t *testing.T) {
-		testLogInAccountClientError(
-			t, app, dbs, `"Valid JSON, but not an object."`, 400, utils.ErrorBadRequest, nil, nil,
-			&models.Log{
+		testDeactivateAccountClientError(
+			t, app, dbs, validAuthHeader, `"Valid JSON, but not an object."`, users[0].Slug, 400,
+			utils.ErrorBadRequest, nil, nil, &models.Log{
 				ClientIP:        clientIP,
-				ClientOperation: utils.LogInAccount,
+				ClientOperation: utils.DeactivateAccount,
 				Detail:          `invalid character '"' looking for beginning of value`,
 				Level:           "warn",
 				Message:         utils.ErrorParse,
@@ -137,10 +145,11 @@ conf *config.AppConfig) {
 	})
 
 	t.Run("empty_object_body_400_bad_request", func(t *testing.T) {
-		testLogInAccountClientError(
-			t, app, dbs, "{}", 400, utils.ErrorBadRequest, nil, nil, &models.Log{
+		testDeactivateAccountClientError(
+			t, app, dbs, validAuthHeader, "{}", users[0].Slug, 400, utils.ErrorBadRequest, nil, nil,
+			&models.Log{
 				ClientIP:        clientIP,
-				ClientOperation: utils.LogInAccount,
+				ClientOperation: utils.DeactivateAccount,
 				Detail:          "",
 				Level:           "warn",
 				Message:         utils.ErrorAcctEmail,
@@ -154,10 +163,11 @@ conf *config.AppConfig) {
 			`{"emial":"%s","password":"%s"}`, "spelled@wrong.co", helpers.VALID_PW,
 		)
 
-		testLogInAccountClientError(
-			t, app, dbs, body, 400, utils.ErrorBadRequest, nil, nil, &models.Log{
+		testDeactivateAccountClientError(
+			t, app, dbs, validAuthHeader, body, users[0].Slug, 400, utils.ErrorBadRequest, nil, nil,
+			&models.Log{
 				ClientIP:        clientIP,
-				ClientOperation: utils.LogInAccount,
+				ClientOperation: utils.DeactivateAccount,
 				Detail:          "",
 				Level:           "warn",
 				Message:         utils.ErrorAcctEmail,
@@ -169,10 +179,11 @@ conf *config.AppConfig) {
 	t.Run("null_email_400_bad_request", func(t *testing.T) {
 		body := `{"email":null,"password":"` + helpers.VALID_PW + `"}`
 
-		testLogInAccountClientError(
-			t, app, dbs, body, 400, utils.ErrorBadRequest, nil, nil, &models.Log{
+		testDeactivateAccountClientError(
+			t, app, dbs, validAuthHeader, body, users[0].Slug, 400, utils.ErrorBadRequest, nil, nil,
+			&models.Log{
 				ClientIP:        clientIP,
-				ClientOperation: utils.LogInAccount,
+				ClientOperation: utils.DeactivateAccount,
 				Detail:          "",
 				Level:           "warn",
 				Message:         utils.ErrorAcctEmail,
@@ -184,10 +195,11 @@ conf *config.AppConfig) {
 	t.Run("empty_email_400_bad_request", func(t *testing.T) {
 		body := fmt.Sprintf(bodyFmt, "", helpers.VALID_PW)
 
-		testLogInAccountClientError(
-			t, app, dbs, body, 400, utils.ErrorBadRequest, nil, nil, &models.Log{
+		testDeactivateAccountClientError(
+			t, app, dbs, validAuthHeader, body, users[0].Slug, 400, utils.ErrorBadRequest, nil, nil,
+			&models.Log{
 				ClientIP:        clientIP,
-				ClientOperation: utils.LogInAccount,
+				ClientOperation: utils.DeactivateAccount,
 				Detail:          "",
 				Level:           "warn",
 				Message:         utils.ErrorAcctEmail,
@@ -202,10 +214,11 @@ conf *config.AppConfig) {
 		} else {
 			body := fmt.Sprintf(bodyFmt, email, helpers.VALID_PW)
 
-			testLogInAccountClientError(
-				t, app, dbs, body, 400, utils.ErrorBadRequest, nil, nil, &models.Log{
+			testDeactivateAccountClientError(
+				t, app, dbs, validAuthHeader, body, users[0].Slug, 400, utils.ErrorBadRequest, nil, nil,
+				&models.Log{
 					ClientIP:        clientIP,
-					ClientOperation: utils.LogInAccount,
+					ClientOperation: utils.DeactivateAccount,
 					Detail:          email,
 					Level:           "warn",
 					Message:         utils.ErrorAcctEmail,
@@ -218,10 +231,11 @@ conf *config.AppConfig) {
 	t.Run("missing_password_400_bad_request", func(t *testing.T) {
 		body := `{"email":"jane.doe@email.co","passwrod":"$pelledWr0ng1234"}`
 
-		testLogInAccountClientError(
-			t, app, dbs, body, 400, utils.ErrorBadRequest, nil, nil, &models.Log{
+		testDeactivateAccountClientError(
+			t, app, dbs, validAuthHeader, body, users[0].Slug, 400, utils.ErrorBadRequest, nil, nil,
+			&models.Log{
 				ClientIP:        clientIP,
-				ClientOperation: utils.LogInAccount,
+				ClientOperation: utils.DeactivateAccount,
 				Detail:          "",
 				Level:           "warn",
 				Message:         utils.ErrorAcctPW,
@@ -233,10 +247,11 @@ conf *config.AppConfig) {
 	t.Run("null_password_400_bad_request", func(t *testing.T) {
 		body := `{"email":"jane.doe@email.co","password":null}`
 
-		testLogInAccountClientError(
-			t, app, dbs, body, 400, utils.ErrorBadRequest, nil, nil, &models.Log{
+		testDeactivateAccountClientError(
+			t, app, dbs, validAuthHeader, body, users[0].Slug, 400, utils.ErrorBadRequest, nil, nil,
+			&models.Log{
 				ClientIP:        clientIP,
-				ClientOperation: utils.LogInAccount,
+				ClientOperation: utils.DeactivateAccount,
 				Detail:          "",
 				Level:           "warn",
 				Message:         utils.ErrorAcctPW,
@@ -248,10 +263,11 @@ conf *config.AppConfig) {
 	t.Run("empty_password_400_bad_request", func(t *testing.T) {
 		body := fmt.Sprintf(bodyFmt, "jane.doe@email.co", "")
 
-		testLogInAccountClientError(
-			t, app, dbs, body, 400, utils.ErrorBadRequest, nil, nil, &models.Log{
+		testDeactivateAccountClientError(
+			t, app, dbs, validAuthHeader, body, users[0].Slug, 400, utils.ErrorBadRequest, nil, nil,
+			&models.Log{
 				ClientIP:        clientIP,
-				ClientOperation: utils.LogInAccount,
+				ClientOperation: utils.DeactivateAccount,
 				Detail:          "",
 				Level:           "warn",
 				Message:         utils.ErrorAcctPW,
@@ -260,18 +276,41 @@ conf *config.AppConfig) {
 		)
 	})
 
-	t.Run("valid_body_failed_login_404_not_found", func(t *testing.T) {
-		setup.SetUpLogger(t, dbs)
-		users, _, _ := setup.SetUpApiGatewayWithData(t, dbs, conf)
+	t.Run("valid_body_mismatch_token_and_slug_400_bad_request", func(t *testing.T) {
+		email := users[0].EmailAddress
+		body := fmt.Sprintf(bodyFmt, email, helpers.VALID_PW)
 
+		testDeactivateAccountClientError(
+			t, app, dbs, validAuthHeader, body, users[1].Slug, 400, utils.ErrorBadRequest, nil, nil,
+			&models.Log{
+				ClientIP:        clientIP,
+				ClientOperation: utils.DeactivateAccount,
+				Detail:          "urlParamSlug != user.Slug",
+				Extra: 					 users[1].Slug + ":" + users[0].Slug,
+				Level:           "error",
+				Message:         utils.ErrorParams,
+				RequestBody:     body,
+			},
+		)
+	})
+
+	t.Run("valid_body_failed_deactivate_400_bad_request", func(t *testing.T) {
+		setup.SetUpLogger(t, dbs)
+		
 		email := users[0].EmailAddress
 		body := fmt.Sprintf(bodyFmt, email, helpers.VALID_PW + "abc123")
 
-		testLogInAccountClientError(t, app, dbs, body, 404, utils.ErrorFailedLogin, nil, nil, nil)
+		testDeactivateAccountClientError(
+			t, app, dbs, validAuthHeader, body, users[0].Slug, 400, utils.ErrorFailedDeactivate, nil, nil,
+			nil,
+		)
 
 		body = fmt.Sprintf(bodyFmt, "jake.doe@email.co", helpers.VALID_PW)
 
-		testLogInAccountClientError(t, app, dbs, body, 404, utils.ErrorFailedLogin, nil, nil, nil)
+		testDeactivateAccountClientError(
+			t, app, dbs, validAuthHeader, body, users[0].Slug, 400, utils.ErrorFailedDeactivate, nil, nil,
+			nil,
+		)
 
 		var logCount int64
 		helpers.CountLogs(t, dbs.Logger, &logCount)
@@ -279,28 +318,30 @@ conf *config.AppConfig) {
 	})
 
 	t.Run("valid_body_200_ok", func(t *testing.T) {
-		users, _, _ := setup.SetUpApiGatewayWithData(t, dbs, conf)
-		email := users[0].EmailAddress
-		body := fmt.Sprintf(bodyFmt, email, helpers.VALID_PW)
-		testLogInAccountSuccess(t, app, dbs, body, email)
+		users, validTokens, _ := setup.SetUpApiGatewayWithData(t, dbs, conf)
+		validAuthHeader := "Token " + validTokens[0]
+		body := fmt.Sprintf(bodyFmt, users[0].EmailAddress, helpers.VALID_PW)
+
+		testDeactivateAccountSuccess(t, app, dbs, validAuthHeader, body, users[0].Slug)
 	})
 
 	t.Run("valid_body_irrelevant_data_200_ok", func(t *testing.T) {
-		users, _, _ := setup.SetUpApiGatewayWithData(t, dbs, conf)
-		email := users[0].EmailAddress
-		validBodyIrrelevantData := fmt.Sprintf(
-			`{"email":"%s","password":"%s","abc":123}`, email, helpers.VALID_PW,
+		users, validTokens, _ := setup.SetUpApiGatewayWithData(t, dbs, conf)
+		validAuthHeader := "Token " + validTokens[0]
+		body := fmt.Sprintf(
+			`{"email":"%s","password":"%s","abc":123}`, users[0].EmailAddress, helpers.VALID_PW,
 		)
-		testLogInAccountSuccess(t, app, dbs, validBodyIrrelevantData, email)
+
+		testDeactivateAccountSuccess(t, app, dbs, validAuthHeader, body, users[0].Slug)
 	})
 }
 
-func testLogInAccountClientError(
-	t *testing.T, app *fiber.App, dbs *databases.Databases, body string, expectedStatus int,
-	expectedDetail string, expectedFieldErrors map[string][]string, expectedNonFieldErrors []string,
-	expectedLog *models.Log,
+func testDeactivateAccountClientError(
+	t *testing.T, app *fiber.App, dbs *databases.Databases, authHeader string, body string,
+	userSlug string, expectedStatus int, expectedDetail string,
+	expectedFieldErrors map[string][]string, expectedNonFieldErrors []string, expectedLog *models.Log,
 ) {
-	resp := newRequestLogInAccount(t, app, body)
+	resp := newRequestDeactivateAccount(t, app, authHeader, body, userSlug)
 	require.Equal(t, expectedStatus, resp.StatusCode)
 
 	helpers.AssertErrorResponseBody(t, resp, &utils.ErrorResponseBody{
@@ -316,64 +357,43 @@ func testLogInAccountClientError(
 	}
 }
 
-func testLogInAccountSuccess(
-	t *testing.T, app *fiber.App, dbs *databases.Databases, body string, email string,
+func testDeactivateAccountSuccess(
+	t *testing.T, app *fiber.App, dbs *databases.Databases, authHeader string, body string,
+	userSlug string,
 ) {
+	var userCount int64
+	helpers.CountUsers(t, dbs.ApiGateway, &userCount)
+	require.EqualValues(t, 2, userCount)
+
 	var sessionCount int64
 	helpers.CountClientSessions(t, dbs.ApiGateway, &sessionCount)
 	require.EqualValues(t, 8, sessionCount)
 
-	resp := newRequestLogInAccount(t, app, body)
-	require.Equal(t, http.StatusOK, resp.StatusCode)
+	resp := newRequestDeactivateAccount(t, app, authHeader, body, userSlug)
+	require.Equal(t, http.StatusNoContent, resp.StatusCode)
+
+	helpers.CountUsers(t, dbs.ApiGateway, &userCount)
+	require.EqualValues(t, 1, userCount)
 
 	helpers.CountClientSessions(t, dbs.ApiGateway, &sessionCount)
-	require.EqualValues(t, 9, sessionCount)
+	require.EqualValues(t, 4, sessionCount)
 
 	if respBody, err := io.ReadAll(resp.Body); err != nil {
 		t.Fatalf("Read response body failed: %s", err.Error())
 	} else {
-		var logInAcctRespBody controllers.LogInAccountResponseBody
-
-		if err := json.Unmarshal(respBody, &logInAcctRespBody); err != nil {
-			t.Fatalf("JSON unmarshal failed: %s", err.Error())
-		}
-
-		require.Regexp(t, utils.TokenRegexp, logInAcctRespBody.Token)
-
-		var user models.User
-		helpers.QueryTestUserByEmail(t, dbs.ApiGateway, &user, email)
-		require.Equal(t, user.Slug, logInAcctRespBody.User.Slug)
-		require.Equal(t, user.Name, logInAcctRespBody.User.Name)
-		require.Equal(t, user.EmailAddress, logInAcctRespBody.User.EmailAddress)
-		require.Equal(t, user.EmailIsVerified, logInAcctRespBody.User.EmailIsVerified)
-		require.Equal(t, false, logInAcctRespBody.User.EmailIsVerified)
-		require.Equal(t, user.PhoneNumber, logInAcctRespBody.User.PhoneNumber)
-		require.Equal(t, "", logInAcctRespBody.User.PhoneNumber)
-		require.Equal(t, user.PhoneIsVerified, logInAcctRespBody.User.PhoneIsVerified)
-		require.Equal(t, false, logInAcctRespBody.User.PhoneIsVerified)
-		require.Equal(t, user.MfaIsEnabled, logInAcctRespBody.User.MfaIsEnabled)
-		require.Equal(t, false, logInAcctRespBody.User.MfaIsEnabled)
-		require.Equal(t, user.IsActive, logInAcctRespBody.User.IsActive)
-		require.Equal(t, true, logInAcctRespBody.User.IsActive)
-		require.Empty(t, logInAcctRespBody.User.CreatedAt)
-		require.Empty(t, logInAcctRespBody.User.UpdatedAt)
-		require.Empty(t, logInAcctRespBody.User.PasswordSalt)
-		require.Empty(t, logInAcctRespBody.User.PasswordHash)
-
-		var session models.ClientSession
-		helpers.QueryTestClientSessionLatest(t, dbs.ApiGateway, &session)
-		require.Equal(t, session.UserSlug, logInAcctRespBody.User.Slug)
-		require.Equal(t, session.TokenKey, logInAcctRespBody.Token[:16])
-		require.Equal(t, session.Digest, utils.HashToken(logInAcctRespBody.Token))
+		require.Empty(t, respBody)
 	}
 }
 
-func newRequestLogInAccount(t *testing.T, app *fiber.App, body string) *http.Response {
+func newRequestDeactivateAccount(
+	t *testing.T, app *fiber.App, authHeader string, body string, userSlug string,
+) *http.Response {
 	reqBody := strings.NewReader(body)
-	req := httptest.NewRequest("POST", "/api/auth/log_in_account", reqBody)
+	req := httptest.NewRequest("POST", "/api/auth/deactivate_account/" + userSlug, reqBody)
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("X-Forwarded-For", helpers.CLIENT_IP)
-	req.Header.Set("Client-Operation", utils.LogInAccount)
+	req.Header.Set("Client-Operation", utils.DeactivateAccount)
+	req.Header.Set("Authorization", authHeader)
 
 	resp, err := app.Test(req)
 

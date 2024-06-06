@@ -190,7 +190,9 @@ func (H Handler) CreateAccount(c *fiber.Ctx) error {
 func (H Handler) vaultsCreateUser(userSlug string) error {
 	reqBody := strings.NewReader(`{"user_slug":"` + userSlug + `"}`)
 
-	if resp, err := http.Post(H.Conf.GO_FIBER_VAULTS_URL, "application/json", reqBody); err != nil {
+	if resp, err := http.Post(
+		H.Conf.GO_FIBER_VAULTS_URL + "/users", "application/json", reqBody,
+	); err != nil {
 		return err
 	} else if resp.StatusCode != fiber.StatusNoContent {
 		if respBody, err := io.ReadAll(resp.Body); err != nil {

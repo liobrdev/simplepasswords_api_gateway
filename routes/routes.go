@@ -19,4 +19,6 @@ func Register(app *fiber.App, dbs *databases.Databases, conf *config.AppConfig) 
 	if H.Conf.GO_FIBER_ENVIRONMENT == "testing" {
 		authApi.Get("/restricted", H.AuthorizeRequest, H.Restricted)
 	}
+
+	authApi.Post("/deactivate_account/:slug", H.AuthorizeRequest, H.DeactivateAccount)
 }

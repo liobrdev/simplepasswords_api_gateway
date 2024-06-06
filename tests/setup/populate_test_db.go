@@ -12,12 +12,10 @@ func populateTestDBApiGateway(
 	t *testing.T, dbs *databases.Databases, conf *config.AppConfig,
 ) (
 	users []models.User,
-	deactivatedUsers []models.DeactivatedUser,
 	validTokens []string,
 	expiredTokens []string,
 ) {
 	users = createTestUsers(t, dbs)
-	deactivatedUsers = createTestDeactivatedUsers(t, dbs)
 	validTokens = createValidTestClientSessions(&users, t, dbs, conf)
 	expiredTokens = createExpiredTestClientSessions(&users, t, dbs, conf)
 	return

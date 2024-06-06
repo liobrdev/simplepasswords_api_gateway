@@ -17,21 +17,14 @@ type User struct {
 	UpdatedAt       time.Time `json:"-" gorm:"autoUpdateTime:nano;not null"`
 }
 
-type DeactivatedUser struct {
-	Slug            string    `gorm:"primaryKey;not null"`
-	Name            string    `gorm:"not null"`
-	EmailAddress    string    `gorm:"not null"`
-	EmailIsVerified bool      `gorm:"not null"`
-	PhoneNumber     string    `gorm:"not null"`
-	PhoneIsVerified bool      `gorm:"not null"`
-	MfaIsEnabled    bool      `gorm:"not null"`
-	CreatedAt       time.Time `gorm:"autoCreateTime:false;not null"`
-	UpdatedAt       time.Time `gorm:"autoUpdateTime:false;not null"`
-	DeactivatedAt   time.Time `gorm:"autoCreateTime:nano;not null"`
-}
-
-func (DeactivatedUser) TableName() string {
-	return "deactivated_users"
+type DiscreetUser struct {
+	Slug 									string `json:"user_slug"`
+	Name            			string `json:"name"`
+	TruncatedEmailAddress string `json:"truncated_email_address"`
+	EmailIsVerified 			bool   `json:"email_is_verified"`
+	TruncatedPhoneNumber  string `json:"truncated_phone_number"`
+	PhoneIsVerified 			bool   `json:"phone_is_verified"`
+	MfaIsEnabled    			bool   `json:"mfa_is_enabled"`
 }
 
 type ClientSession struct {

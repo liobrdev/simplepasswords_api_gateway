@@ -466,7 +466,7 @@ func testCreateAccount(
 
 	t.Run("valid_body_email_already_exists_409_conflict", func(t *testing.T) {
 		setup.SetUpLogger(t, dbs)
-		users, _, _, _ := setup.SetUpApiGatewayWithData(t, dbs, conf)
+		users, _, _ := setup.SetUpApiGatewayWithData(t, dbs, conf)
 
 		email := users[0].EmailAddress
 		body := fmt.Sprintf(bodyFmt, "JDoe", email, helpers.VALID_PW, helpers.VALID_PW)

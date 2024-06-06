@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"bytes"
+	"context"
 	"strconv"
 	"time"
 
@@ -10,6 +11,8 @@ import (
 	"github.com/liobrdev/simplepasswords_api_gateway/models"
 	"github.com/liobrdev/simplepasswords_api_gateway/utils"
 )
+
+type userContextKey struct{}
 
 func (H Handler) AuthorizeRequest(c *fiber.Ctx) error {
 	authHeader := c.Get("Authorization")
@@ -52,7 +55,7 @@ func (H Handler) AuthorizeRequest(c *fiber.Ctx) error {
 	if !thisSession.User.IsActive {
 		H.logger(
 			c, c.Get("Client-Operation"), "!thisSession.User.IsActive",
-			"token_key = " + authToken[:16] + " ; user_slug = " + thisSession.User.Slug, "error",
+			"token_key = " + authToken[:16] + " ; user_slug = " + thisSession.UserSlug, "error",
 			utils.ErrorBadClient,
 		)
 
@@ -126,7 +129,16 @@ func (H Handler) AuthorizeRequest(c *fiber.Ctx) error {
 			thisSession.ExpiresAt = newExpiresAt
 			H.DBs.ApiGateway.Save(thisSession)
 		}
+	} else {
+		H.logger(
+			c, c.Get("Client-Operation"), "utils.HashToken(authToken) != thisSession.Digest",
+			"authToken = " + authToken, "error", utils.ErrorToken,
+		)
+	
+		return utils.RespondWithError(c, 401, utils.ErrorToken, nil, nil)
 	}
+
+	c.SetUserContext(context.WithValue(context.Background(), userContextKey{}, thisSession.User))
 
 	return c.Next()
 }

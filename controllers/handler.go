@@ -16,8 +16,10 @@ type Handler struct {
 	Conf *config.AppConfig
 }
 
-func (H Handler) createLog(c *fiber.Ctx, caller string, clientOperation string, detail string,
-extra string, level string, message string) {
+func (H Handler) createLog(
+	c *fiber.Ctx, caller string, clientOperation string, detail string, extra string, level string,
+	message string,
+) {
 	var clientIP string
 
 	if H.Conf.GO_FIBER_BEHIND_PROXY {

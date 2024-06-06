@@ -19,7 +19,6 @@ func main() {
 
 	if err := dbs.ApiGateway.AutoMigrate(
 		&models.User{},
-		&models.DeactivatedUser{},
 		&models.ClientSession{},
 	); err != nil {
 		log.Fatalln("Failed api_gateway database auto-migrate:", err.Error())
