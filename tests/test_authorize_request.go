@@ -147,7 +147,7 @@ func testAuthorizeRequest(
 	})
 
 	t.Run("valid_token_ip_mismatch_401_unauthorized", func(t *testing.T) {
-		_, validTokens, _ := setup.SetUpApiGatewayWithData(t, dbs, conf)
+		_, validTokens, _, _, _ := setup.SetUpApiGatewayWithData(t, dbs, conf)
 
 		testAuthorizeRequestClientError(
 			t, app, dbs, "Token " + validTokens[1], 401, utils.ErrorToken, nil, nil, &models.Log{
@@ -162,7 +162,7 @@ func testAuthorizeRequest(
 	})
 
 	t.Run("valid_token_expired_401_unauthorized", func(t *testing.T) {
-		_, _, expiredTokens := setup.SetUpApiGatewayWithData(t, dbs, conf)
+		_, _, expiredTokens, _, _ := setup.SetUpApiGatewayWithData(t, dbs, conf)
 		setup.SetUpLogger(t, dbs)
 
 		var sessionCount int64
@@ -182,7 +182,7 @@ func testAuthorizeRequest(
 	})
 
 	t.Run("valid_slug_204_no_content", func(t *testing.T) {
-		_, validTokens, _ := setup.SetUpApiGatewayWithData(t, dbs, conf)
+		_, validTokens, _, _, _ := setup.SetUpApiGatewayWithData(t, dbs, conf)
 
 		var sessionCount int64
 		helpers.CountClientSessions(t, dbs.ApiGateway, &sessionCount)

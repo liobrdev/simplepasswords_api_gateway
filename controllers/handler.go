@@ -17,8 +17,7 @@ type Handler struct {
 }
 
 func (H Handler) createLog(
-	c *fiber.Ctx, caller string, clientOperation string, detail string, extra string, level string,
-	message string,
+	c *fiber.Ctx, caller, clientOperation, detail, extra, level, message string,
 ) {
 	var clientIP string
 
@@ -41,12 +40,15 @@ func (H Handler) createLog(
 	})
 }
 
-func (H Handler) logger(c *fiber.Ctx, clientOperation string, detail string, extra string,
-level string, message string) {
+func (H Handler) logger(c *fiber.Ctx, clientOperation, detail, extra, level, message string) {
 	_, file, line, _ := runtime.Caller(1)
 
 	H.createLog(
 		c, file + ":" + strconv.FormatInt(int64(line), 10), clientOperation, detail, extra, level,
 		message,
 	)
+}
+
+func (H Handler) sendEmail(emailAddress, name, tokenString string) {
+	// TO IMPLEMENT
 }

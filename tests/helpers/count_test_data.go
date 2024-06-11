@@ -23,3 +23,9 @@ func CountClientSessions(t *testing.T, db *gorm.DB, sessionCount *int64) {
 		t.Fatalf("Client session count failed: %s", result.Error.Error())
 	}
 }
+
+func CountEmailVerificationTokens(t *testing.T, db *gorm.DB, emailTokenCount *int64) {
+	if result := db.Table("email_verification_tokens").Count(emailTokenCount); result.Error != nil {
+		t.Fatalf("Email verification token count failed: %s", result.Error.Error())
+	}
+}

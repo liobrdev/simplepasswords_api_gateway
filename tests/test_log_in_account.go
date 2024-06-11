@@ -262,7 +262,7 @@ conf *config.AppConfig) {
 
 	t.Run("valid_body_failed_login_404_not_found", func(t *testing.T) {
 		setup.SetUpLogger(t, dbs)
-		users, _, _ := setup.SetUpApiGatewayWithData(t, dbs, conf)
+		users, _, _, _, _ := setup.SetUpApiGatewayWithData(t, dbs, conf)
 
 		email := users[0].EmailAddress
 		body := fmt.Sprintf(bodyFmt, email, helpers.VALID_PW + "abc123")
@@ -279,14 +279,14 @@ conf *config.AppConfig) {
 	})
 
 	t.Run("valid_body_200_ok", func(t *testing.T) {
-		users, _, _ := setup.SetUpApiGatewayWithData(t, dbs, conf)
+		users, _, _, _, _ := setup.SetUpApiGatewayWithData(t, dbs, conf)
 		email := users[0].EmailAddress
 		body := fmt.Sprintf(bodyFmt, email, helpers.VALID_PW)
 		testLogInAccountSuccess(t, app, dbs, body, email)
 	})
 
 	t.Run("valid_body_irrelevant_data_200_ok", func(t *testing.T) {
-		users, _, _ := setup.SetUpApiGatewayWithData(t, dbs, conf)
+		users, _, _, _, _ := setup.SetUpApiGatewayWithData(t, dbs, conf)
 		email := users[0].EmailAddress
 		validBodyIrrelevantData := fmt.Sprintf(
 			`{"email":"%s","password":"%s","abc":123}`, email, helpers.VALID_PW,

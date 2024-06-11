@@ -32,7 +32,7 @@ conf *config.AppConfig) {
 	bodyFmt := `{"email":"%s","password":"%s"}`
 
 	setup.SetUpLogger(t, dbs)
-	users, validTokens, _ := setup.SetUpApiGatewayWithData(t, dbs, conf)
+	users, validTokens, _, _, _ := setup.SetUpApiGatewayWithData(t, dbs, conf)
 
 	validAuthHeader := "Token " + validTokens[0]
 
@@ -318,7 +318,7 @@ conf *config.AppConfig) {
 	})
 
 	t.Run("valid_body_200_ok", func(t *testing.T) {
-		users, validTokens, _ := setup.SetUpApiGatewayWithData(t, dbs, conf)
+		users, validTokens, _, _, _ := setup.SetUpApiGatewayWithData(t, dbs, conf)
 		validAuthHeader := "Token " + validTokens[0]
 		body := fmt.Sprintf(bodyFmt, users[0].EmailAddress, helpers.VALID_PW)
 
@@ -326,7 +326,7 @@ conf *config.AppConfig) {
 	})
 
 	t.Run("valid_body_irrelevant_data_200_ok", func(t *testing.T) {
-		users, validTokens, _ := setup.SetUpApiGatewayWithData(t, dbs, conf)
+		users, validTokens, _, _, _ := setup.SetUpApiGatewayWithData(t, dbs, conf)
 		validAuthHeader := "Token " + validTokens[0]
 		body := fmt.Sprintf(
 			`{"email":"%s","password":"%s","abc":123}`, users[0].EmailAddress, helpers.VALID_PW,

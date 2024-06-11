@@ -95,8 +95,9 @@ confElem *reflect.Value) {
 	}
 }
 
-func loadFileContentsFromPathsToConf(conf *AppConfig, pathsType *reflect.Type,
-pathsValue *reflect.Value, fieldCount int) {
+func loadFileContentsFromPathsToConf(
+	conf *AppConfig, pathsType *reflect.Type, pathsValue *reflect.Value, fieldCount int,
+) {
 	confElem := reflect.ValueOf(conf).Elem()
 
 	for i := 0; i < fieldCount; i++ {

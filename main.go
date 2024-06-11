@@ -20,6 +20,7 @@ func main() {
 	if err := dbs.ApiGateway.AutoMigrate(
 		&models.User{},
 		&models.ClientSession{},
+		&models.EmailVerificationToken{},
 	); err != nil {
 		log.Fatalln("Failed api_gateway database auto-migrate:", err.Error())
 	}

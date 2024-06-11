@@ -32,9 +32,7 @@ func (H Handler) DeactivateAccount(c *fiber.Ctx) error {
 	var ok bool
 
 	if user, ok = c.UserContext().Value(userContextKey{}).(models.User); !ok {
-		H.logger(
-			c, utils.DeactivateAccount, "UserContext not ok", "", "error", utils.ErrorUserContext,
-		)
+		H.logger(c, utils.DeactivateAccount, "UserContext not ok", "", "error", utils.ErrorUserContext)
 
 		return utils.RespondWithError(c, 500, utils.ErrorServer, nil, nil)
 	}

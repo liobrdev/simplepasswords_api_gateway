@@ -37,6 +37,15 @@ type ClientSession struct {
 	ExpiresAt time.Time `gorm:"not null"`
 }
 
+type EmailVerificationToken struct {
+	UserSlug  string    `gorm:"index;not null"`
+	User      User      `gorm:"foreignKey:UserSlug;constraint:OnDelete:CASCADE"`
+	Digest    []byte    `gorm:"unique;not null"`
+	TokenKey  string    `gorm:"primaryKey;size:16;not null"`
+	CreatedAt time.Time `gorm:"autoCreateTime:false;not null"`
+	ExpiresAt time.Time `gorm:"not null"`
+}
+
 func (ClientSession) TableName() string {
 	return "client_sessions"
 }
