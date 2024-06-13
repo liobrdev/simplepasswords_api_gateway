@@ -17,7 +17,6 @@ func createValidTestClientSessions(
 ) (tokens []string) {
 
 	var validSessions []models.ClientSession
-	now := time.Now().UTC()
 
 	for _, user := range *users {
 		for j, clientIP := 0, "0.0.0.0"; j < 2; j++ {
@@ -31,6 +30,8 @@ func createValidTestClientSessions(
 				t.Fatalf("Generate test client session token failed: %s", err.Error())
 				panic(err)
 			} else {
+				now := time.Now().UTC()
+
 				validSessions = append(validSessions, models.ClientSession{
 					UserSlug:  user.Slug,
 					ClientIP:  clientIP,

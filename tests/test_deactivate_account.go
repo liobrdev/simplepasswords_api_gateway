@@ -395,7 +395,7 @@ func newRequestDeactivateAccount(
 	req.Header.Set("Client-Operation", utils.DeactivateAccount)
 	req.Header.Set("Authorization", authHeader)
 
-	resp, err := app.Test(req)
+	resp, err := app.Test(req, -1)
 
 	if err != nil {
 		t.Fatalf("Send test request failed: %s", err.Error())

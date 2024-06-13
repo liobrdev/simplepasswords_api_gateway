@@ -52,4 +52,8 @@ func runTests(t *testing.T, app *fiber.App, dbs *databases.Databases, conf *conf
 	t.Run("test_verify_email_try", func(t *testing.T) {
 		testVerifyEmailTry(t, app, dbs, conf)
 	})
+
+	t.Run("test_verify_email_confirm", func(t *testing.T) {
+		testVerifyEmailConfirm(t, app, dbs, conf)
+	})
 }

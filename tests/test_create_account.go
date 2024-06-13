@@ -584,7 +584,7 @@ func newRequestCreateAccount(t *testing.T, app *fiber.App, body string) *http.Re
 	req.Header.Set("X-Forwarded-For", helpers.CLIENT_IP)
 	req.Header.Set("Client-Operation", utils.CreateAccount)
 
-	resp, err := app.Test(req)
+	resp, err := app.Test(req, -1)
 
 	if err != nil {
 		t.Fatalf("Send test request failed: %s", err.Error())

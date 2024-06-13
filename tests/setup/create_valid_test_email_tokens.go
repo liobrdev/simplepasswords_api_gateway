@@ -14,7 +14,6 @@ func createValidTestEmailTokens(
 	users *[]models.User, t *testing.T, dbs *databases.Databases,
 ) (tokens []string) {
 	var validTokens []models.EmailVerificationToken
-	now := time.Now().UTC()
 
 	for _, user := range *users {
 		for j := 0; j < 2; j++ {
@@ -22,6 +21,8 @@ func createValidTestEmailTokens(
 				t.Fatalf("Generate test email token failed: %s", err.Error())
 				panic(err)
 			} else {
+				now := time.Now().UTC()
+
 				validTokens = append(validTokens, models.EmailVerificationToken{
 					UserSlug:  user.Slug,
 					Digest:    utils.HashToken(token),

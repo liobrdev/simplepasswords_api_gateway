@@ -22,4 +22,5 @@ func Register(app *fiber.App, dbs *databases.Databases, conf *config.AppConfig) 
 
 	authApi.Post("/deactivate_account/:slug", H.AuthorizeRequest, H.DeactivateAccount)
 	authApi.Post("/verify_email_try", H.AuthorizeRequest, H.VerifyEmailTry)
+	authApi.Post("/verify_email_confirm", H.AuthorizeRequest, H.VerifyEmailConfirm)
 }
