@@ -2,8 +2,6 @@ package controllers
 
 import (
 	"errors"
-	"io"
-	"net/http"
 	"strconv"
 
 	"github.com/gofiber/fiber/v2"
@@ -95,7 +93,7 @@ func (H Handler) DeactivateAccount(c *fiber.Ctx) error {
 		return utils.RespondWithError(c, 500, utils.ErrorServer, nil, nil)
 	}
 
-	if H.Conf.GO_FIBER_ENVIRONMENT != "testing" {
+	if H.Conf.ENVIRONMENT != "testing" {
 		if err := H.vaultsDeleteUser(user.Slug); err != nil {
 			H.logger(c, utils.DeactivateAccount, err.Error(), "", "error", utils.ErrorVaultsDeleteUser)
 
@@ -107,17 +105,20 @@ func (H Handler) DeactivateAccount(c *fiber.Ctx) error {
 }
 
 func (H Handler) vaultsDeleteUser(userSlug string) error {
-	if req, err := http.NewRequest("DELETE", H.Conf.GO_FIBER_VAULTS_URL + "/users/" + userSlug, nil);
-	err != nil {
-		return err
-	} else if resp, err := http.DefaultClient.Do(req); err != nil {
-		return err
-	} else if resp.StatusCode != fiber.StatusNoContent {
-		if respBody, err := io.ReadAll(resp.Body); err != nil {
-			return errors.New("vaultsDeleteUser error, couldn't read response")
-		} else {
-			return errors.New(string(respBody))
+	agent := fiber.Delete(
+		"http://" + H.Conf.VAULTS_HOST + ":" + H.Conf.VAULTS_PORT + "/api/users/" + userSlug,
+	)
+
+	if statusCode, body, errs := agent.String(); len(errs) > 0 {
+		var errorString string
+
+		for _, err := range errs {
+			errorString += err.Error() + ";"
 		}
+
+		return errors.New(errorString)
+	} else if statusCode != 204 {
+		return errors.New("vaultsDeleteUser error: " + body)
 	}
 
 	return nil

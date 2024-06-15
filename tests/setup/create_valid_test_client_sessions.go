@@ -22,7 +22,7 @@ func createValidTestClientSessions(
 		for j, clientIP := 0, "0.0.0.0"; j < 2; j++ {
 			if j == 1 {
 				clientIP = helpers.OLD_IP
-			} else if conf.GO_FIBER_BEHIND_PROXY {
+			} else if conf.BEHIND_PROXY {
 				clientIP = helpers.CLIENT_IP
 			}
 

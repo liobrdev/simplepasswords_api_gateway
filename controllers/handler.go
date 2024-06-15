@@ -21,7 +21,7 @@ func (H Handler) createLog(
 ) {
 	var clientIP string
 
-	if H.Conf.GO_FIBER_BEHIND_PROXY {
+	if H.Conf.BEHIND_PROXY {
 		clientIP = c.Get("X-Forwarded-For")
 	} else {
 		clientIP = c.IP()

@@ -24,26 +24,26 @@ func Init(conf *config.AppConfig) *Databases {
 		PrepareStmt:            true,
 	}
 
-	if conf.GO_FIBER_ENVIRONMENT != "production" {
+	if conf.ENVIRONMENT != "production" {
 		dbApiGateway = openDbSession("sqlite", "./test_dbs/api_gateway.sqlite", &gormConfig)
 		dbLogger = openDbSession("sqlite", "./test_dbs/logger.sqlite", &gormConfig)
 	} else {
 		dbApiGateway = openDbSession("postgres", fmt.Sprintf(
 			"user=%s password=%s host=%s port=%s dbname=%s sslmode=disable TimeZone=UTC",
-			conf.GO_FIBER_API_GATEWAY_DB_USER,
-			conf.GO_FIBER_API_GATEWAY_DB_PASSWORD,
-			conf.GO_FIBER_API_GATEWAY_DB_HOST,
-			conf.GO_FIBER_API_GATEWAY_DB_PORT,
-			conf.GO_FIBER_API_GATEWAY_DB_NAME,
+			conf.API_GATEWAY_DB_USER,
+			conf.API_GATEWAY_DB_PASSWORD,
+			conf.API_GATEWAY_DB_HOST,
+			conf.API_GATEWAY_DB_PORT,
+			conf.API_GATEWAY_DB_NAME,
 		), &gormConfig)
 
 		dbLogger = openDbSession("postgres", fmt.Sprintf(
 			"user=%s password=%s host=%s port=%s dbname=%s sslmode=disable TimeZone=UTC",
-			conf.GO_FIBER_LOGGER_DB_USER,
-			conf.GO_FIBER_LOGGER_DB_PASSWORD,
-			conf.GO_FIBER_LOGGER_DB_HOST,
-			conf.GO_FIBER_LOGGER_DB_PORT,
-			conf.GO_FIBER_LOGGER_DB_NAME,
+			conf.LOGGER_DB_USER,
+			conf.LOGGER_DB_PASSWORD,
+			conf.LOGGER_DB_HOST,
+			conf.LOGGER_DB_PORT,
+			conf.LOGGER_DB_NAME,
 		), &gormConfig)
 	}
 

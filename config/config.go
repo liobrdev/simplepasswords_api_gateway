@@ -12,58 +12,64 @@ import (
 )
 
 type AppConfig struct {
-	GO_FIBER_ENVIRONMENT             string
-	GO_FIBER_BEHIND_PROXY            bool
-	GO_FIBER_PROXY_IP_ADDRESSES      []string
-	GO_FIBER_API_GATEWAY_DB_USER     string
-	GO_FIBER_API_GATEWAY_DB_PASSWORD string
-	GO_FIBER_API_GATEWAY_DB_HOST     string
-	GO_FIBER_API_GATEWAY_DB_PORT     string
-	GO_FIBER_API_GATEWAY_DB_NAME     string
-	GO_FIBER_LOGGER_DB_USER          string
-	GO_FIBER_LOGGER_DB_PASSWORD      string
-	GO_FIBER_LOGGER_DB_HOST          string
-	GO_FIBER_LOGGER_DB_PORT          string
-	GO_FIBER_LOGGER_DB_NAME          string
-	GO_FIBER_REDIS_PASSWORD          string
-	GO_FIBER_SECRET_KEY              string
-	GO_FIBER_SERVER_HOST             string
-	GO_FIBER_SERVER_PORT             string
-	GO_FIBER_VAULTS_URL              string
-	GO_TESTING_CONTEXT               *testing.T
+	ENVIRONMENT             string
+	BEHIND_PROXY            bool
+	PROXY_IP_ADDRESSES      []string
+	API_GATEWAY_DB_USER     string
+	API_GATEWAY_DB_PASSWORD string
+	API_GATEWAY_DB_HOST     string
+	API_GATEWAY_DB_PORT     string
+	API_GATEWAY_DB_NAME     string
+	LOGGER_DB_USER          string
+	LOGGER_DB_PASSWORD      string
+	LOGGER_DB_HOST          string
+	LOGGER_DB_PORT          string
+	LOGGER_DB_NAME          string
+	SECRET_KEY              string
+	API_GATEWAY_HOST				string
+	API_GATEWAY_PORT				string
+	VAULTS_HOST							string
+	VAULTS_PORT							string
+	REDIS_PASSWORD          string
+	EMAIL_HOST_USER					string
+  EMAIL_HOST_PASSWORD			string
+	GO_TESTING_CONTEXT			*testing.T
 }
 
 type envAbsPaths struct {
-	GO_FIBER_ENVIRONMENT             string
-	GO_FIBER_BEHIND_PROXY            string
-	GO_FIBER_PROXY_IP_ADDRESSES      string
-	GO_FIBER_API_GATEWAY_DB_USER     string
-	GO_FIBER_API_GATEWAY_DB_PASSWORD string
-	GO_FIBER_API_GATEWAY_DB_HOST     string
-	GO_FIBER_API_GATEWAY_DB_PORT     string
-	GO_FIBER_API_GATEWAY_DB_NAME     string
-	GO_FIBER_LOGGER_DB_USER          string
-	GO_FIBER_LOGGER_DB_PASSWORD      string
-	GO_FIBER_LOGGER_DB_HOST          string
-	GO_FIBER_LOGGER_DB_PORT          string
-	GO_FIBER_LOGGER_DB_NAME          string
-	GO_FIBER_REDIS_PASSWORD          string
-	GO_FIBER_SECRET_KEY              string
-	GO_FIBER_SERVER_HOST             string
-	GO_FIBER_SERVER_PORT             string
-	GO_FIBER_VAULTS_URL              string
+	ENVIRONMENT             string
+	BEHIND_PROXY            string
+	PROXY_IP_ADDRESSES      string
+	API_GATEWAY_DB_USER     string
+	API_GATEWAY_DB_PASSWORD string
+	API_GATEWAY_DB_HOST     string
+	API_GATEWAY_DB_PORT     string
+	API_GATEWAY_DB_NAME     string
+	LOGGER_DB_USER          string
+	LOGGER_DB_PASSWORD      string
+	LOGGER_DB_HOST          string
+	LOGGER_DB_PORT          string
+	LOGGER_DB_NAME          string
+	REDIS_PASSWORD          string
+	SECRET_KEY              string
+	API_GATEWAY_HOST				string
+	API_GATEWAY_PORT				string
+	VAULTS_HOST							string
+	VAULTS_PORT							string
+	EMAIL_HOST_USER					string
+  EMAIL_HOST_PASSWORD			string
 }
 
 func getDefaultConfigValue(fieldName string) string {
 	var defaultConfigValue string
 
-	if fieldName == "GO_FIBER_ENVIRONMENT" {
+	if fieldName == "ENVIRONMENT" {
 		defaultConfigValue = "development"
-	} else if fieldName == "GO_FIBER_SERVER_HOST" {
+	} else if fieldName == "API_GATEWAY_HOST" {
 		defaultConfigValue = "localhost"
-	} else if fieldName == "GO_FIBER_SERVER_PORT" {
+	} else if fieldName == "API_GATEWAY_PORT" {
 		defaultConfigValue = "5050"
-	} else if fieldName == "GO_FIBER_VAULTS_URL" {
+	} else if fieldName == "VAULTS_URL" {
 		defaultConfigValue = "http://localhost:8080"
 	}
 
@@ -80,14 +86,14 @@ confElem *reflect.Value) {
 			"Error reading contents of '%s' from environment variable %s:\n%s", path, fieldName,
 			scanner.Err(),
 		)
-	} else if fieldName == "GO_FIBER_BEHIND_PROXY" {
+	} else if fieldName == "BEHIND_PROXY" {
 		if contents == "true" {
-			conf.GO_FIBER_BEHIND_PROXY = true
+			conf.BEHIND_PROXY = true
 		} else {
-			conf.GO_FIBER_BEHIND_PROXY = false
+			conf.BEHIND_PROXY = false
 		}
-	} else if fieldName == "GO_FIBER_PROXY_IP_ADDRESSES" {
-		conf.GO_FIBER_PROXY_IP_ADDRESSES = strings.Split(contents, ",")
+	} else if fieldName == "PROXY_IP_ADDRESSES" {
+		conf.PROXY_IP_ADDRESSES = strings.Split(contents, ",")
 	} else if contents == "" {
 		confElem.FieldByName(fieldName).SetString(getDefaultConfigValue(fieldName))
 	} else {
@@ -123,7 +129,6 @@ func loadFileContentsFromPathsToConf(
 }
 
 func LoadConfigFromEnv(conf *AppConfig) (err error) {
-	viper.SetEnvPrefix("GO_FIBER")
 	viper.SetConfigFile("./.env")
 	viper.AutomaticEnv()
 

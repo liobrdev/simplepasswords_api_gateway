@@ -16,7 +16,7 @@ func Register(app *fiber.App, dbs *databases.Databases, conf *config.AppConfig) 
 	authApi.Post("/create_account", H.CreateAccount)
 	authApi.Post("/log_in_account", H.LogInAccount)
 
-	if H.Conf.GO_FIBER_ENVIRONMENT == "testing" {
+	if H.Conf.ENVIRONMENT == "testing" {
 		authApi.Get("/restricted", H.AuthorizeRequest, H.Restricted)
 	}
 

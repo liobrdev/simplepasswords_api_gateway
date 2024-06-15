@@ -29,5 +29,5 @@ func main() {
 		log.Fatalln("Failed logger database auto-migrate:", err.Error())
 	}
 
-	log.Fatal(app.Listen(conf.GO_FIBER_SERVER_HOST + ":" + conf.GO_FIBER_SERVER_PORT))
+	log.Fatal(app.Listen(conf.API_GATEWAY_DB_USER + ":" + conf.API_GATEWAY_PORT))
 }

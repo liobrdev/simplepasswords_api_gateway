@@ -25,7 +25,7 @@ func testLogInAccount(t *testing.T, app *fiber.App, dbs *databases.Databases,
 conf *config.AppConfig) {
 	var clientIP string
 
-	if conf.GO_FIBER_BEHIND_PROXY {
+	if conf.BEHIND_PROXY {
 		clientIP = helpers.CLIENT_IP
 	} else {
 		clientIP = "0.0.0.0"

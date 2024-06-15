@@ -19,14 +19,14 @@ func TestApp(t *testing.T) {
 
 	t.Run("is_behind_proxy", func(t *testing.T) {
 		conf.GO_TESTING_CONTEXT = t
-		conf.GO_FIBER_BEHIND_PROXY = true
+		conf.BEHIND_PROXY = true
 		app, dbs := app.CreateApp(&conf)
 		runTests(t, app, dbs, &conf)
 	})
 
 	t.Run("is_not_behind_proxy", func(t *testing.T) {
 		conf.GO_TESTING_CONTEXT = t
-		conf.GO_FIBER_BEHIND_PROXY = false
+		conf.BEHIND_PROXY = false
 		app, dbs := app.CreateApp(&conf)
 		runTests(t, app, dbs, &conf)
 	})
