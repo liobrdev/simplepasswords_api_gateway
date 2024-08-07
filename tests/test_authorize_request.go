@@ -167,14 +167,14 @@ func testAuthorizeRequest(
 
 		var sessionCount int64
 		helpers.CountClientSessions(t, dbs.ApiGateway, &sessionCount)
-		require.EqualValues(t, 8, sessionCount)
+		require.EqualValues(t, 4, sessionCount)
 
 		testAuthorizeRequestClientError(
 			t, app, dbs, "Token " + expiredTokens[0], 401, utils.ErrorToken, nil, nil, nil,
 		)
 
 		helpers.CountClientSessions(t, dbs.ApiGateway, &sessionCount)
-		require.EqualValues(t, 6, sessionCount)
+		require.EqualValues(t, 2, sessionCount)
 
 		var logCount int64
 		helpers.CountLogs(t, dbs.Logger, &logCount)
@@ -186,15 +186,11 @@ func testAuthorizeRequest(
 
 		var sessionCount int64
 		helpers.CountClientSessions(t, dbs.ApiGateway, &sessionCount)
-		require.EqualValues(t, 8, sessionCount)
+		require.EqualValues(t, 4, sessionCount)
 
 		testAuthorizeRequestSuccess(t, app, "Token " + validTokens[0])
 		helpers.CountClientSessions(t, dbs.ApiGateway, &sessionCount)
-		require.EqualValues(t, 6, sessionCount)
-
-		testAuthorizeRequestSuccess(t, app, "Token " + validTokens[2])
-		helpers.CountClientSessions(t, dbs.ApiGateway, &sessionCount)
-		require.EqualValues(t, 4, sessionCount)
+		require.EqualValues(t, 2, sessionCount)
 	})
 }
 

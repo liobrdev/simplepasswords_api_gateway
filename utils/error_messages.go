@@ -5,6 +5,7 @@ const (
 	ErrorAcctName       	string = "Invalid `name`."
 	ErrorAcctEmail      	string = "Invalid `email`."
 	ErrorAcctPW         	string = "Invalid `password`."
+	ErrorAcctPhone				string = "Invalid `phone_number`."
 	ErrorNonMatchPW     	string = "Non-matching password inputs."
 	ErrorCreateUser     	string = "Failed create user transaction."
 	ErrorVaultsCreateUser string = "Failed vaults API create_user."

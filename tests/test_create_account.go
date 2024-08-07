@@ -32,7 +32,7 @@ func testCreateAccount(
 		clientIP = "0.0.0.0"
 	}
 
-	bodyFmt := `{"name":"%s","email":"%s","password":"%s","password_2":"%s"}`
+	bodyFmt := `{"name":"%s","email":"%s","phone":"%s","password":"%s","password_2":"%s"}`
 
 	setup.SetUpLogger(t, dbs)
 
@@ -73,7 +73,8 @@ func testCreateAccount(
 		)
 
 		body := `[` + fmt.Sprintf(
-			bodyFmt, "JDoe", "jdoe@email.co", helpers.VALID_PW, helpers.VALID_PW,
+			bodyFmt,
+			conf.ADMIN_NAME, conf.ADMIN_EMAIL, conf.ADMIN_PHONE, helpers.VALID_PW, helpers.VALID_PW,
 		) + `]`
 
 		testCreateAccountClientError(
@@ -152,10 +153,23 @@ func testCreateAccount(
 		)
 	})
 
+	t.Run("invalid_name_400_bad_request", func(t *testing.T) {
+		setup.SetUpLogger(t, dbs)
+		body := fmt.Sprintf(
+			bodyFmt, "NotAdmin", conf.ADMIN_EMAIL, conf.ADMIN_PHONE, helpers.VALID_PW, helpers.VALID_PW,
+		)
+
+		testCreateAccountClientError(t, app, dbs, body, 400, utils.ErrorBadRequest, nil, nil, nil)
+
+		var logCount int64
+		helpers.CountLogs(t, dbs.Logger, &logCount)
+		require.EqualValues(t, 0, logCount)
+	})
+
 	t.Run("missing_name_400_bad_request", func(t *testing.T) {
 		body := fmt.Sprintf(
-			`{"nmae":"%s","email":"%s","password":"%s","password_2":"%s"}`,
-			"Spelled wrong!", "jdoe@email.co", helpers.VALID_PW, helpers.VALID_PW,
+			`{"nmae":"%s","email":"%s","phone":"%s","password":"%s","password_2":"%s"}`,
+			conf.ADMIN_NAME, conf.ADMIN_EMAIL, conf.ADMIN_PHONE, helpers.VALID_PW, helpers.VALID_PW,
 		)
 
 		testCreateAccountClientError(
@@ -172,8 +186,8 @@ func testCreateAccount(
 
 	t.Run("null_name_400_bad_request", func(t *testing.T) {
 		body := fmt.Sprintf(
-			`{"name":null,"email":"%s","password":"%s","password_2":"%s"}`,
-			"jdoe@email.co", helpers.VALID_PW, helpers.VALID_PW,
+			`{"name":null,"email":"%s","phone":"%s","password":"%s","password_2":"%s"}`,
+			conf.ADMIN_EMAIL, conf.ADMIN_PHONE, helpers.VALID_PW, helpers.VALID_PW,
 		)
 
 		testCreateAccountClientError(
@@ -189,7 +203,9 @@ func testCreateAccount(
 	})
 
 	t.Run("empty_name_400_bad_request", func(t *testing.T) {
-		body := fmt.Sprintf(bodyFmt, "", "jdoe@email.co", helpers.VALID_PW, helpers.VALID_PW)
+		body := fmt.Sprintf(
+			bodyFmt, "", conf.ADMIN_EMAIL, conf.ADMIN_PHONE, helpers.VALID_PW, helpers.VALID_PW,
+		)
 
 		testCreateAccountClientError(
 			t, app, dbs, body, 400, utils.ErrorBadRequest, nil, nil, &models.Log{
@@ -203,31 +219,10 @@ func testCreateAccount(
 		)
 	})
 
-	t.Run("too_long_name_400_bad_request", func(t *testing.T) {
-		if name, err := utils.GenerateSlug(65); err != nil {
-			t.Fatalf("Generate long string failed: %s", err.Error())
-		} else {
-			body := fmt.Sprintf(
-				bodyFmt, name, "jdoe@email.co", helpers.VALID_PW, helpers.VALID_PW,
-			)
-
-			testCreateAccountClientError(
-				t, app, dbs, body, 400, utils.ErrorBadRequest, nil, nil, &models.Log{
-					ClientIP:        clientIP,
-					ClientOperation: utils.CreateAccount,
-					Detail:          name,
-					Level:           "warn",
-					Message:         utils.ErrorAcctName,
-					RequestBody:     body,
-				},
-			)
-		}
-	})
-
 	t.Run("missing_email_400_bad_request", func(t *testing.T) {
 		body := fmt.Sprintf(
-			`{"name":"%s","emial":"%s","password":"%s","password_2":"%s"}`,
-			"JDoe", "spelled@wrong.co", helpers.VALID_PW, helpers.VALID_PW,
+			`{"name":"%s","emial":"%s","phone":"%s","password":"%s","password_2":"%s"}`,
+			conf.ADMIN_NAME, conf.ADMIN_EMAIL, conf.ADMIN_PHONE, helpers.VALID_PW, helpers.VALID_PW,
 		)
 
 		testCreateAccountClientError(
@@ -244,8 +239,8 @@ func testCreateAccount(
 
 	t.Run("null_email_400_bad_request", func(t *testing.T) {
 		body := fmt.Sprintf(
-			`{"name":"%s","email":null,"password":"%s","password_2":"%s"}`,
-			"JDoe", helpers.VALID_PW, helpers.VALID_PW,
+			`{"name":"%s","email":null,"phone":"%s","password":"%s","password_2":"%s"}`,
+			conf.ADMIN_NAME, conf.ADMIN_PHONE, helpers.VALID_PW, helpers.VALID_PW,
 		)
 
 		testCreateAccountClientError(
@@ -261,7 +256,9 @@ func testCreateAccount(
 	})
 
 	t.Run("empty_email_400_bad_request", func(t *testing.T) {
-		body := fmt.Sprintf(bodyFmt, "JDoe", "", helpers.VALID_PW, helpers.VALID_PW)
+		body := fmt.Sprintf(
+			bodyFmt, conf.ADMIN_NAME, "", conf.ADMIN_PHONE, helpers.VALID_PW, helpers.VALID_PW,
+		)
 
 		testCreateAccountClientError(
 			t, app, dbs, body, 400, utils.ErrorBadRequest, nil, nil, &models.Log{
@@ -275,29 +272,21 @@ func testCreateAccount(
 		)
 	})
 
-	t.Run("too_long_email_400_bad_request", func(t *testing.T) {
-		if email, err := utils.GenerateSlug(257); err != nil {
-			t.Fatalf("Generate long string failed: %s", err.Error())
-		} else {
-			body := fmt.Sprintf(bodyFmt, "JDoe", email, helpers.VALID_PW, helpers.VALID_PW)
+	t.Run("invalid_email_400_bad_request", func(t *testing.T) {
+		setup.SetUpLogger(t, dbs)
 
-			testCreateAccountClientError(
-				t, app, dbs, body, 400, utils.ErrorBadRequest, nil, nil, &models.Log{
-					ClientIP:        clientIP,
-					ClientOperation: utils.CreateAccount,
-					Detail:          email,
-					Level:           "warn",
-					Message:         utils.ErrorAcctEmail,
-					RequestBody:     body,
-				},
-			)
-		}
+		body := fmt.Sprintf(
+			bodyFmt,
+			conf.ADMIN_NAME, "wrong@test.com", conf.ADMIN_PHONE, helpers.VALID_PW, helpers.VALID_PW,
+		)
+
+		testCreateAccountClientError(t, app, dbs, body, 400, utils.ErrorBadRequest, nil, nil, nil)
 	})
 
 	t.Run("missing_password_400_bad_request", func(t *testing.T) {
 		body := fmt.Sprintf(
-			`{"name":"%s","email":"%s","passwrod":"%s","password_2":"%s"}`,
-			"JDoe", "jdoe@email.co", "$pelledWr0ng1234", "$pelledWr0ng1234",
+			`{"name":"%s","email":"%s","phone":"%s","passwrod":"%s","password_2":"%s"}`,
+			conf.ADMIN_NAME, conf.ADMIN_EMAIL, conf.ADMIN_PHONE, helpers.VALID_PW, helpers.VALID_PW,
 		)
 
 		testCreateAccountClientError(
@@ -314,7 +303,8 @@ func testCreateAccount(
 
 	t.Run("unmatching_passwords_400_bad_request", func(t *testing.T) {
 		body := fmt.Sprintf(
-			bodyFmt, "JDoe", "jdoe@email.co", helpers.VALID_PW, "N0nmatchpa$sw0rd",
+			bodyFmt, conf.ADMIN_NAME, conf.ADMIN_EMAIL, conf.ADMIN_PHONE, helpers.VALID_PW,
+			"N0nmatchpa$sw0rd",
 		)
 
 		testCreateAccountClientError(
@@ -330,7 +320,10 @@ func testCreateAccount(
 	})
 
 	t.Run("password_is_email_400_bad_request", func(t *testing.T) {
-		body := fmt.Sprintf(bodyFmt, "JDoe", "jdoe@email.co", "jdoe@email.co", "jdoe@email.co")
+		body := fmt.Sprintf(
+			bodyFmt, conf.ADMIN_NAME, conf.ADMIN_EMAIL, conf.ADMIN_PHONE, conf.ADMIN_EMAIL,
+			conf.ADMIN_EMAIL,
+		)
 
 		testCreateAccountClientError(
 			t, app, dbs, body, 400, utils.ErrorBadRequest, nil, nil, &models.Log{
@@ -345,48 +338,39 @@ func testCreateAccount(
 	})
 
 	t.Run("too_long_password_400_bad_request", func(t *testing.T) {
-		if slug, err := utils.GenerateSlug(253); err != nil {
+		setup.SetUpLogger(t, dbs)
+		pwLength := 72 - len(conf.ADMIN_SALT_1) - len(conf.ADMIN_SALT_2)
+
+		if slug, err := utils.GenerateSlug(pwLength - 3); err != nil {
 			t.Fatalf("Generate long password failed: %s", err.Error())
 		} else {
-			password := slug + "qQ1!"
-			body := fmt.Sprintf(bodyFmt, "JDoe", "jdoe@email.co", password, password)
-
-			testCreateAccountClientError(
-				t, app, dbs, body, 400, utils.ErrorBadRequest, nil, nil, &models.Log{
-					ClientIP:        clientIP,
-					ClientOperation: utils.CreateAccount,
-					Detail:          "Too long: 257 > 256",
-					Level:           "warn",
-					Message:         utils.ErrorAcctPW,
-					RequestBody:     body,
-				},
-			)
+			pw := slug + "qQ1!"
+			body := fmt.Sprintf(bodyFmt, conf.ADMIN_NAME, conf.ADMIN_EMAIL, conf.ADMIN_PHONE, pw, pw)
+			testCreateAccountClientError(t, app, dbs, body, 400, utils.ErrorBadRequest, nil, nil, nil)
 		}
+	
+		var logCount int64
+		helpers.CountLogs(t, dbs.Logger, &logCount)
+		require.EqualValues(t, 0, logCount)
 	})
 
 	t.Run("too_short_password_400_bad_request", func(t *testing.T) {
 		if slug, err := utils.GenerateSlug(11); err != nil {
 			t.Fatalf("Generate short password failed: %s", err.Error())
 		} else {
-			password := slug + "qQ1!"
-			body := fmt.Sprintf(bodyFmt, "JDoe", "jdoe@email.co", password, password)
-
-			testCreateAccountClientError(
-				t, app, dbs, body, 400, utils.ErrorBadRequest, nil, nil, &models.Log{
-					ClientIP:        clientIP,
-					ClientOperation: utils.CreateAccount,
-					Detail:          "Too short: 15 < 16",
-					Level:           "warn",
-					Message:         utils.ErrorAcctPW,
-					RequestBody:     body,
-				},
-			)
+			pw := slug + "qQ1!"
+			body := fmt.Sprintf(bodyFmt, conf.ADMIN_NAME, conf.ADMIN_EMAIL, conf.ADMIN_PHONE, pw, pw)
+			testCreateAccountClientError(t, app, dbs, body, 400, utils.ErrorBadRequest, nil, nil, nil)
 		}
+
+		var logCount int64
+		helpers.CountLogs(t, dbs.Logger, &logCount)
+		require.EqualValues(t, 0, logCount)
 	})
 
 	t.Run("password_missing_uppercase_400_bad_request", func(t *testing.T) {
-		password := "n0uppercasepa$sw0rd"
-		body := fmt.Sprintf(bodyFmt, "JDoe", "jdoe@email.co", password, password)
+		pw := "n0uppercasepa$sw0rd"
+		body := fmt.Sprintf(bodyFmt, conf.ADMIN_NAME, conf.ADMIN_EMAIL, conf.ADMIN_PHONE, pw, pw)
 
 		testCreateAccountClientError(
 			t, app, dbs, body, 400, utils.ErrorBadRequest, nil, nil, &models.Log{
@@ -401,8 +385,8 @@ func testCreateAccount(
 	})
 
 	t.Run("password_missing_lowercase_400_bad_request", func(t *testing.T) {
-		password := "N0LOWERCASEPA$SW0RD"
-		body := fmt.Sprintf(bodyFmt, "JDoe", "jdoe@email.co", password, password)
+		pw := "N0LOWERCASEPA$SW0RD"
+		body := fmt.Sprintf(bodyFmt, conf.ADMIN_NAME, conf.ADMIN_EMAIL, conf.ADMIN_PHONE, pw, pw)
 
 		testCreateAccountClientError(
 			t, app, dbs, body, 400, utils.ErrorBadRequest, nil, nil, &models.Log{
@@ -417,8 +401,8 @@ func testCreateAccount(
 	})
 
 	t.Run("password_missing_number_400_bad_request", func(t *testing.T) {
-		password := "nONumberPA$SWoRD"
-		body := fmt.Sprintf(bodyFmt, "JDoe", "jdoe@email.co", password, password)
+		pw := "nONumberPA$SWoRD"
+		body := fmt.Sprintf(bodyFmt, conf.ADMIN_NAME, conf.ADMIN_EMAIL, conf.ADMIN_PHONE, pw, pw)
 
 		testCreateAccountClientError(
 			t, app, dbs, body, 400, utils.ErrorBadRequest, nil, nil, &models.Log{
@@ -433,8 +417,8 @@ func testCreateAccount(
 	})
 
 	t.Run("password_missing_special_char_400_bad_request", func(t *testing.T) {
-		password := "nOSp3cialCharPA5SWoRD"
-		body := fmt.Sprintf(bodyFmt, "JDoe", "jdoe@email.co", password, password)
+		pw := "nOSp3cialCharPA5SWoRD"
+		body := fmt.Sprintf(bodyFmt, conf.ADMIN_NAME, conf.ADMIN_EMAIL, conf.ADMIN_PHONE, pw, pw)
 
 		testCreateAccountClientError(
 			t, app, dbs, body, 400, utils.ErrorBadRequest, nil, nil, &models.Log{
@@ -449,8 +433,8 @@ func testCreateAccount(
 	})
 
 	t.Run("password_has_whitespace_400_bad_request", func(t *testing.T) {
-		password := "h@s Spa(3	PA5SWoRD"
-		body := fmt.Sprintf(bodyFmt, "JDoe", "jdoe@email.co", password, password)
+		pw := "h@s Spa(3	PA5SWoRD"
+		body := fmt.Sprintf(bodyFmt, conf.ADMIN_NAME, conf.ADMIN_EMAIL, conf.ADMIN_PHONE, pw, pw)
 
 		testCreateAccountClientError(
 			t, app, dbs, body, 400, utils.ErrorBadRequest, nil, nil, &models.Log{
@@ -464,16 +448,16 @@ func testCreateAccount(
 		)
 	})
 
-	t.Run("valid_body_email_already_exists_409_conflict", func(t *testing.T) {
+	t.Run("valid_body_user_already_exists_409_conflict", func(t *testing.T) {
 		setup.SetUpLogger(t, dbs)
-		users, _, _, _, _ := setup.SetUpApiGatewayWithData(t, dbs, conf)
+		setup.SetUpApiGatewayWithData(t, dbs, conf)
 
-		email := users[0].EmailAddress
-		body := fmt.Sprintf(bodyFmt, "JDoe", email, helpers.VALID_PW, helpers.VALID_PW)
-
-		testCreateAccountClientError(
-			t, app, dbs, body, http.StatusConflict, utils.ErrorDiffEmail, nil, nil, nil,
+		body := fmt.Sprintf(
+			bodyFmt,
+			conf.ADMIN_NAME, conf.ADMIN_EMAIL, conf.ADMIN_PHONE, helpers.VALID_PW, helpers.VALID_PW,
 		)
+
+		testCreateAccountClientError(t, app, dbs, body, 500, utils.ErrorServer, nil, nil, nil)
 
 		var logCount int64
 		helpers.CountLogs(t, dbs.Logger, &logCount)
@@ -481,18 +465,21 @@ func testCreateAccount(
 	})
 
 	t.Run("valid_body_201_created", func(t *testing.T) {
-		email := "jake.doe@email.co"
-		body := fmt.Sprintf(bodyFmt, "Jake Doe", email, helpers.VALID_PW, helpers.VALID_PW)
-		testCreateAccountSuccess(t, app, dbs, body, email)
+		body := fmt.Sprintf(
+			bodyFmt,
+			conf.ADMIN_NAME, conf.ADMIN_EMAIL, conf.ADMIN_PHONE, helpers.VALID_PW, helpers.VALID_PW,
+		)
+
+		testCreateAccountSuccess(t, app, dbs, body, conf.ADMIN_EMAIL)
 	})
 
 	t.Run("valid_body_irrelevant_data_201_created", func(t *testing.T) {
-		email := "jake.doe@email.co"
 		validBodyIrrelevantData := fmt.Sprintf(
-			`{"name":"%s","email":"%s","password":"%s","password_2":"%s","abc":123}`,
-			"Jake Doe", email, helpers.VALID_PW, helpers.VALID_PW,
+			`{"name":"%s","email":"%s","phone":"%s","password":"%s","password_2":"%s","abc":123}`,
+			conf.ADMIN_NAME, conf.ADMIN_EMAIL, conf.ADMIN_PHONE, helpers.VALID_PW, helpers.VALID_PW,
 		)
-		testCreateAccountSuccess(t, app, dbs, validBodyIrrelevantData, email)
+
+		testCreateAccountSuccess(t, app, dbs, validBodyIrrelevantData, conf.ADMIN_EMAIL)
 	})
 }
 
@@ -553,20 +540,12 @@ func testCreateAccountSuccess(
 		helpers.QueryTestUserByEmail(t, dbs.ApiGateway, &user, email)
 		require.Equal(t, user.Slug, createAcctRespBody.User.Slug)
 		require.Equal(t, user.Name, createAcctRespBody.User.Name)
-		require.Equal(t, user.EmailAddress, createAcctRespBody.User.EmailAddress)
-		require.Equal(t, user.EmailIsVerified, createAcctRespBody.User.EmailIsVerified)
-		require.Equal(t, false, createAcctRespBody.User.EmailIsVerified)
-		require.Equal(t, user.PhoneNumber, createAcctRespBody.User.PhoneNumber)
-		require.Equal(t, "", createAcctRespBody.User.PhoneNumber)
-		require.Equal(t, user.PhoneIsVerified, createAcctRespBody.User.PhoneIsVerified)
-		require.Equal(t, false, createAcctRespBody.User.PhoneIsVerified)
-		require.Equal(t, user.MfaIsEnabled, createAcctRespBody.User.MfaIsEnabled)
-		require.Equal(t, false, createAcctRespBody.User.MfaIsEnabled)
+		require.Equal(t, utils.HideEmail(user.EmailAddress), createAcctRespBody.User.EmailAddress)
+		require.Equal(t, utils.HidePhone(user.PhoneNumber), createAcctRespBody.User.PhoneNumber)
 		require.Equal(t, user.IsActive, createAcctRespBody.User.IsActive)
 		require.Equal(t, true, createAcctRespBody.User.IsActive)
 		require.Empty(t, createAcctRespBody.User.CreatedAt)
 		require.Empty(t, createAcctRespBody.User.UpdatedAt)
-		require.Empty(t, createAcctRespBody.User.PasswordSalt)
 		require.Empty(t, createAcctRespBody.User.PasswordHash)
 
 		var session models.ClientSession

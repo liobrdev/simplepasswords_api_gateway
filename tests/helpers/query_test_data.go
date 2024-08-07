@@ -32,8 +32,8 @@ func QueryTestClientSessionLatest(t *testing.T, db *gorm.DB, session *models.Cli
 	}
 }
 
-func QueryTestEmailTokenLatest(t *testing.T, db *gorm.DB, token *models.EmailVerificationToken) {
-	if result := db.Order("created_at DESC").Limit(1).Find(&token); result.Error != nil {
-		t.Fatalf("Latest email token query failed: %s", result.Error.Error())
+func QueryTestMFATokenLatest(t *testing.T, db *gorm.DB, mfaToken *models.MFAToken) {
+	if result := db.Order("created_at DESC").Limit(1).Find(&mfaToken); result.Error != nil {
+		t.Fatalf("Latest client session query failed: %s", result.Error.Error())
 	}
 }

@@ -4,23 +4,20 @@ import (
 	"testing"
 
 	"github.com/liobrdev/simplepasswords_api_gateway/config"
+	"github.com/liobrdev/simplepasswords_api_gateway/controllers"
 	"github.com/liobrdev/simplepasswords_api_gateway/databases"
 	"github.com/liobrdev/simplepasswords_api_gateway/models"
 )
 
-func populateTestDBApiGateway(
-	t *testing.T, dbs *databases.Databases, conf *config.AppConfig,
-) (
-	users []models.User,
-	validSessionTokens []string,
-	expiredSessionTokens []string,
-	validEmailTokens []string,
-	expiredEmailTokens []string,
+func populateTestDBApiGateway(t *testing.T, dbs *databases.Databases, conf *config.AppConfig) (
+	user models.User,
+	validSessionTokens, expiredSessionTokens []string,
+	validMFATokens, expiredMFATokens []controllers.AuthSecondFactorRequestBody,
 ) {
-	users = createTestUsers(t, dbs)
-	validSessionTokens = createValidTestClientSessions(&users, t, dbs, conf)
-	expiredSessionTokens = createExpiredTestClientSessions(&users, t, dbs, conf)
-	validEmailTokens = createValidTestEmailTokens(&users, t, dbs)
-	expiredEmailTokens = createExpiredTestEmailTokens(&users, t, dbs)
+	user = createTestUser(t, dbs, conf)
+	validSessionTokens = createValidTestClientSessions(&user, t, dbs, conf)
+	expiredSessionTokens = createExpiredTestClientSessions(&user, t, dbs, conf)
+	validMFATokens = createValidTestMFATokens(&user, t, dbs)
+	expiredMFATokens = createExpiredTestMFATokens(&user, t, dbs)
 	return
 }

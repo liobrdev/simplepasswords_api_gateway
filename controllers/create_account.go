@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"errors"
-	"strconv"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -13,14 +12,15 @@ import (
 )
 
 type CreateAccountRequestBody struct {
-	Name      string `json:"name"`
-	Email     string `json:"email"`
-	Password  string `json:"password"`
-	Password2 string `json:"password_2"`
+	Name      	string `json:"name"`
+	Email     	string `json:"email"`
+	Phone				string `json:"phone"`
+	Password  	string `json:"password"`
+	Password2 	string `json:"password_2"`
 }
 
 type CreateAccountResponseBody struct {
-	Token string      `json:"token"`
+	Token string			`json:"token"`
 	User  models.User `json:"user"`
 }
 
@@ -33,14 +33,26 @@ func (H Handler) CreateAccount(c *fiber.Ctx) error {
 		return utils.RespondWithError(c, 400, utils.ErrorBadRequest, nil, nil)
 	}
 
-	if body.Name == "" || len(body.Name) > 64 {
-		H.logger(c, utils.CreateAccount, body.Name, "", "warn", utils.ErrorAcctName)
+	if body.Name != H.Conf.ADMIN_NAME {
+		if body.Name == "" {
+			H.logger(c, utils.CreateAccount, body.Name, "", "warn", utils.ErrorAcctName)
+		}
 
 		return utils.RespondWithError(c, 400, utils.ErrorBadRequest, nil, nil)
 	}
 
-	if body.Email == "" || len(body.Email) > 256 {
-		H.logger(c, utils.CreateAccount, body.Email, "", "warn", utils.ErrorAcctEmail)
+	if body.Email != H.Conf.ADMIN_EMAIL {
+		if body.Email == "" {
+			H.logger(c, utils.CreateAccount, body.Email, "", "warn", utils.ErrorAcctEmail)
+		}
+
+		return utils.RespondWithError(c, 400, utils.ErrorBadRequest, nil, nil)
+	}
+
+	if body.Phone != H.Conf.ADMIN_PHONE {
+		if body.Phone == "" {
+			H.logger(c, utils.CreateAccount, body.Phone, "", "warn", utils.ErrorAcctPhone)
+		}
 
 		return utils.RespondWithError(c, 400, utils.ErrorBadRequest, nil, nil)
 	}
@@ -63,21 +75,11 @@ func (H Handler) CreateAccount(c *fiber.Ctx) error {
 		return utils.RespondWithError(c, 400, utils.ErrorBadRequest, nil, nil)
 	}
 
-	if len(body.Password) > 256 {
-		H.logger(
-			c, utils.CreateAccount, "Too long: " + strconv.Itoa(len(body.Password)) + " > 256", "",
-			"warn", utils.ErrorAcctPW,
-		)
-
+	if len(body.Password) > 72 - len(H.Conf.ADMIN_SALT_1) - len(H.Conf.ADMIN_SALT_2) {
 		return utils.RespondWithError(c, 400, utils.ErrorBadRequest, nil, nil)
 	}
 
 	if len(body.Password) < 16 {
-		H.logger(
-			c, utils.CreateAccount, "Too short: " + strconv.Itoa(len(body.Password)) + " < 16", "",
-			"warn", utils.ErrorAcctPW,
-		)
-
 		return utils.RespondWithError(c, 400, utils.ErrorBadRequest, nil, nil)
 	}
 
@@ -121,17 +123,17 @@ func (H Handler) CreateAccount(c *fiber.Ctx) error {
 		user.Slug = userSlug
 	}
 
-	if salt, hash, err := utils.GenerateUserCredentials(body.Password); err != nil {
+	if hash, err := utils.GenerateUserCredentials(body.Password, H.Conf); err != nil {
 		H.logger(c, utils.CreateAccount, err.Error(), "", "error", "Failed generate user credentials")
 
 		return utils.RespondWithError(c, 500, utils.ErrorServer, nil, nil)
 	} else {
-		user.PasswordSalt = salt
 		user.PasswordHash = hash
 	}
 
 	user.Name = body.Name
 	user.EmailAddress = body.Email
+	user.PhoneNumber = body.Phone
 
 	var sessionToken string
 
@@ -161,13 +163,11 @@ func (H Handler) CreateAccount(c *fiber.Ctx) error {
 
 		return nil
 	}); err != nil {
-		if err.Error() == "UNIQUE constraint failed: users.email_address" {
-			return utils.RespondWithError(c, fiber.StatusConflict, utils.ErrorDiffEmail, nil, nil)
-		} else {
+		if !utils.UniqueConstraintRegexp.Match([]byte(err.Error())) {
 			H.logger(c, utils.CreateAccount, err.Error(), "", "error", utils.ErrorCreateUser)
-
-			return utils.RespondWithError(c, 500, utils.ErrorServer, nil, nil)
 		}
+
+		return utils.RespondWithError(c, 500, utils.ErrorServer, nil, nil)
 	}
 
 	if H.Conf.ENVIRONMENT != "testing" {
@@ -178,18 +178,23 @@ func (H Handler) CreateAccount(c *fiber.Ctx) error {
 		}
 	}
 
+	hiddenUser := models.User{
+		Slug:					user.Slug,
+		Name:					user.Name,
+		EmailAddress:	utils.HideEmail(user.EmailAddress),
+		PhoneNumber:	utils.HidePhone(user.PhoneNumber),
+		IsActive: 		user.IsActive,
+	}
+
 	return c.Status(fiber.StatusCreated).JSON(&CreateAccountResponseBody{
 		Token: sessionToken,
-		User:  user,
+		User:  hiddenUser,
 	})
 }
 
 func (H Handler) vaultsCreateUser(userSlug string) error {
-	agent := fiber.Post(
-		"http://" + H.Conf.VAULTS_HOST + ":" + H.Conf.VAULTS_PORT + "/api/users",
-	)
-
-	agent.JSON(fiber.Map{"user_slug": userSlug})
+	agent := fiber.Post("http://" + H.Conf.VAULTS_HOST + ":" + H.Conf.VAULTS_PORT + "/api/users")
+	agent.JSON(fiber.Map{ "user_slug": userSlug })
 
 	if statusCode, body, errs := agent.String(); len(errs) > 0 {
 		var errorString string

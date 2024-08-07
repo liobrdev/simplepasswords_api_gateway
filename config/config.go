@@ -28,11 +28,19 @@ type AppConfig struct {
 	SECRET_KEY              string
 	API_GATEWAY_HOST				string
 	API_GATEWAY_PORT				string
+	ADMIN_NAME							string
+	ADMIN_EMAIL							string
+	ADMIN_PHONE							string
+	ADMIN_SALT_1						string
+	ADMIN_SALT_2						string
 	VAULTS_HOST							string
 	VAULTS_PORT							string
 	REDIS_PASSWORD          string
 	EMAIL_HOST_USER					string
   EMAIL_HOST_PASSWORD			string
+	TWILIO_ACCOUNT_SID			string
+	TWILIO_AUTH_TOKEN				string
+	TWILIO_PHONE_NUMBER			string
 	GO_TESTING_CONTEXT			*testing.T
 }
 
@@ -54,10 +62,18 @@ type envAbsPaths struct {
 	SECRET_KEY              string
 	API_GATEWAY_HOST				string
 	API_GATEWAY_PORT				string
+	ADMIN_NAME							string
+	ADMIN_EMAIL							string
+	ADMIN_PHONE							string
+	ADMIN_SALT_1						string
+	ADMIN_SALT_2						string
 	VAULTS_HOST							string
 	VAULTS_PORT							string
 	EMAIL_HOST_USER					string
   EMAIL_HOST_PASSWORD			string
+	TWILIO_ACCOUNT_SID			string
+	TWILIO_AUTH_TOKEN				string
+	TWILIO_PHONE_NUMBER			string
 }
 
 func getDefaultConfigValue(fieldName string) string {
@@ -69,8 +85,10 @@ func getDefaultConfigValue(fieldName string) string {
 		defaultConfigValue = "localhost"
 	} else if fieldName == "API_GATEWAY_PORT" {
 		defaultConfigValue = "5050"
-	} else if fieldName == "VAULTS_URL" {
-		defaultConfigValue = "http://localhost:8080"
+	} else if fieldName == "VAULTS_HOST" {
+		defaultConfigValue = "localhost"
+	} else if fieldName == "VAULTS_PORT" {
+		defaultConfigValue = "8080"
 	}
 
 	return defaultConfigValue

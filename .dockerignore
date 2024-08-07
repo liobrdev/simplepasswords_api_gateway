@@ -6,6 +6,7 @@ Dockerfile
 LICENSE
 README.md
 secret_files
+standby
 test_dbs
 tests
 notes.txt

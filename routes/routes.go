@@ -14,13 +14,10 @@ func Register(app *fiber.App, dbs *databases.Databases, conf *config.AppConfig) 
 
 	authApi := api.Group("/auth")
 	authApi.Post("/create_account", H.CreateAccount)
-	authApi.Post("/log_in_account", H.LogInAccount)
+	authApi.Post("/first_factor", H.AuthFirstFactor)
+	authApi.Post("/second_factor", H.AuthSecondFactor)
 
 	if H.Conf.ENVIRONMENT == "testing" {
 		authApi.Get("/restricted", H.AuthorizeRequest, H.Restricted)
 	}
-
-	authApi.Post("/deactivate_account/:slug", H.AuthorizeRequest, H.DeactivateAccount)
-	authApi.Post("/verify_email_try", H.AuthorizeRequest, H.VerifyEmailTry)
-	authApi.Post("/verify_email_confirm", H.AuthorizeRequest, H.VerifyEmailConfirm)
 }

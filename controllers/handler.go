@@ -4,7 +4,10 @@ import (
 	"runtime"
 	"strconv"
 
+	"github.com/goccy/go-json"
 	"github.com/gofiber/fiber/v2"
+	"github.com/twilio/twilio-go"
+	twilioApi "github.com/twilio/twilio-go/rest/api/v2010"
 
 	"github.com/liobrdev/simplepasswords_api_gateway/config"
 	"github.com/liobrdev/simplepasswords_api_gateway/databases"
@@ -49,6 +52,26 @@ func (H Handler) logger(c *fiber.Ctx, clientOperation, detail, extra, level, mes
 	)
 }
 
-func (H Handler) sendEmail(emailAddress, name, tokenString string) {
-	// TO IMPLEMENT
+func (H Handler) sendSMS(phoneNumber, messageBody string) error {
+	client := twilio.NewRestClientWithParams(twilio.ClientParams{
+		Username: H.Conf.TWILIO_ACCOUNT_SID,
+		Password: H.Conf.TWILIO_AUTH_TOKEN,
+	})
+
+	params := &twilioApi.CreateMessageParams{}
+	params.SetFrom(H.Conf.TWILIO_PHONE_NUMBER)
+	params.SetTo(phoneNumber)
+	params.SetBody(messageBody)
+
+	if resp, err := client.Api.CreateMessage(params); err != nil {
+		return err
+	} else if response, err := json.Marshal(resp); err != nil {
+		return err
+	} else {
+		if H.Conf.GO_TESTING_CONTEXT != nil {
+			H.Conf.GO_TESTING_CONTEXT.Log("\n\nResponse:\n" + string(response) + "\n\n")
+		}
+
+		return nil
+	}
 }

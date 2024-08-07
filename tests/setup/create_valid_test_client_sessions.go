@@ -13,36 +13,34 @@ import (
 )
 
 func createValidTestClientSessions(
-	users *[]models.User, t *testing.T, dbs *databases.Databases, conf *config.AppConfig,
+	user *models.User, t *testing.T, dbs *databases.Databases, conf *config.AppConfig,
 ) (tokens []string) {
 
 	var validSessions []models.ClientSession
 
-	for _, user := range *users {
-		for j, clientIP := 0, "0.0.0.0"; j < 2; j++ {
-			if j == 1 {
-				clientIP = helpers.OLD_IP
-			} else if conf.BEHIND_PROXY {
-				clientIP = helpers.CLIENT_IP
-			}
+	for i, clientIP := 0, "0.0.0.0"; i < 2; i++ {
+		if i == 1 {
+			clientIP = helpers.OLD_IP
+		} else if conf.BEHIND_PROXY {
+			clientIP = helpers.CLIENT_IP
+		}
 
-			if token, err := utils.GenerateSlug(80); err != nil {
-				t.Fatalf("Generate test client session token failed: %s", err.Error())
-				panic(err)
-			} else {
-				now := time.Now().UTC()
+		if token, err := utils.GenerateSlug(80); err != nil {
+			t.Fatalf("Generate test client session token failed: %s", err.Error())
+			panic(err)
+		} else {
+			now := time.Now().UTC()
 
-				validSessions = append(validSessions, models.ClientSession{
-					UserSlug:  user.Slug,
-					ClientIP:  clientIP,
-					Digest:    utils.HashToken(token),
-					TokenKey:  token[:16],
-					CreatedAt: now,
-					ExpiresAt: now.Add(time.Duration(15) * time.Minute),
-				})
+			validSessions = append(validSessions, models.ClientSession{
+				UserSlug:  user.Slug,
+				ClientIP:  clientIP,
+				Digest:    utils.HashToken(token),
+				TokenKey:  token[:16],
+				CreatedAt: now,
+				ExpiresAt: now.Add(time.Duration(15) * time.Minute),
+			})
 
-				tokens = append(tokens, token)
-			}
+			tokens = append(tokens, token)
 		}
 	}
 

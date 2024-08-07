@@ -1,6 +1,7 @@
 /simplepasswords_api_gateway
 /.env
 /secret_files
+/standby
 /test_dbs/*
 /tests/.env
 /tests/secret_files

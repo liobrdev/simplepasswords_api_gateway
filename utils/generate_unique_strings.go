@@ -7,6 +7,8 @@ import (
 	"math/big"
 
 	"golang.org/x/crypto/bcrypt"
+
+	"github.com/liobrdev/simplepasswords_api_gateway/config"
 )
 
 var lettersSize = big.NewInt(int64(len(UPPERCASE_LETTERS)))
@@ -14,6 +16,7 @@ var digitSize = big.NewInt(int64(len(DIGITS)))
 var specialCharsSize = big.NewInt(int64(len(SPECIAL_CHARS)))
 var slugAlphabetSize = big.NewInt(int64(len(SLUG_ALPHABET)))
 var passwordAlphabetSize = big.NewInt(int64(len(PASSWORD_ALPHABET)))
+var otpAlphabetSize = big.NewInt(int64(len(OTP_ALPHABET)))
 
 func init() {
 	buffer := make([]byte, 1)
@@ -90,6 +93,26 @@ func GenerateSlug(n int) (string, error) {
 	return string(byte_slug), nil
 }
 
+func GenerateOTP() ([]string, error) {
+	blocks := make([]string, 5)
+
+	for n := 0; n < 5; n++ {
+		byte_block := make([]byte, 4)
+
+		for i := 0; i < 4; i++ {
+			if num, err := rand.Int(rand.Reader, otpAlphabetSize); err != nil {
+				return nil, err
+			} else {
+				byte_block[i] = OTP_ALPHABET[num.Int64()]
+			}
+		}
+
+		blocks[n] = string(byte_block)
+	}
+
+	return blocks, nil
+}
+
 func GenerateSalt(n int) (string, error) {
 	byte_salt := make([]byte, n)
 
@@ -104,14 +127,12 @@ func GenerateSalt(n int) (string, error) {
 	return string(byte_salt), nil
 }
 
-func GenerateUserCredentials(password string) (string, []byte, error) {
-	if salt, err := GenerateSalt(32); err != nil {
-		return "", nil, err
-	} else if hash, err := bcrypt.GenerateFromPassword(
-		[]byte(password+salt), bcrypt.DefaultCost,
+func GenerateUserCredentials(password string, conf *config.AppConfig) ([]byte, error) {
+	if hash, err := bcrypt.GenerateFromPassword(
+		[]byte(conf.ADMIN_SALT_1 + password + conf.ADMIN_SALT_2), bcrypt.DefaultCost,
 	); err != nil {
-		return "", nil, err
+		return nil, err
 	} else {
-		return salt, hash, nil
+		return hash, nil
 	}
 }
