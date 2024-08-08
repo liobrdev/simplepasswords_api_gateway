@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"errors"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -171,8 +170,8 @@ func (H Handler) CreateAccount(c *fiber.Ctx) error {
 	}
 
 	if H.Conf.ENVIRONMENT != "testing" {
-		if err := H.vaultsCreateUser(user.Slug); err != nil {
-			H.logger(c, utils.CreateAccount, err.Error(), "", "error", utils.ErrorVaultsCreateUser)
+		if errorString := H.vaultsCreateUser(user.Slug); errorString != "" {
+			H.logger(c, utils.CreateAccount, errorString, "", "error", utils.ErrorVaultsCreateUser)
 
 			return utils.RespondWithError(c, 500, utils.ErrorServer, nil, nil)
 		}
@@ -192,21 +191,24 @@ func (H Handler) CreateAccount(c *fiber.Ctx) error {
 	})
 }
 
-func (H Handler) vaultsCreateUser(userSlug string) error {
+func (H Handler) vaultsCreateUser(userSlug string) string {
 	agent := fiber.Post("http://" + H.Conf.VAULTS_HOST + ":" + H.Conf.VAULTS_PORT + "/api/users")
 	agent.JSON(fiber.Map{ "user_slug": userSlug })
+	statusCode, body, errs := agent.String()
 
-	if statusCode, body, errs := agent.String(); len(errs) > 0 {
-		var errorString string
+	var errorString string
 
+	if len(errs) > 0 {
 		for _, err := range errs {
-			errorString += err.Error() + ";"
+			errorString += err.Error() + ";;"
 		}
 
-		return errors.New(errorString)
-	} else if statusCode != 204 {
-		return errors.New("vaultsCreateUser error: " + body)
+		if body != "" {
+			errorString += body + ";;"
+		}
+	} else if statusCode != 204 && body != "" {
+		errorString += body + ";;"
 	}
 
-	return nil
+	return errorString
 }
