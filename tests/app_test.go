@@ -40,24 +40,12 @@ func runTests(t *testing.T, app *fiber.App, dbs *databases.Databases, conf *conf
 	t.Run("test_auth_first_factor", func(t *testing.T) {
 		testAuthFirstFactor(t, app, dbs, conf)
 	})
-
-	t.Run("test_authorize_request", func(t *testing.T) {
-		testAuthorizeRequest(t, app, dbs, conf)
-	})
-
+	
 	t.Run("test_auth_second_factor", func(t *testing.T) {
 		testAuthSecondFactor(t, app, dbs, conf)
 	})
 
-	// t.Run("test_deactivate_account", func(t *testing.T) {
-	// 	testDeactivateAccount(t, app, dbs, conf)
-	// })
-
-	// t.Run("test_verify_email_try", func(t *testing.T) {
-	// 	testVerifyEmailTry(t, app, dbs, conf)
-	// })
-
-	// t.Run("test_verify_email_confirm", func(t *testing.T) {
-	// 	testVerifyEmailConfirm(t, app, dbs, conf)
-	// })
+	t.Run("test_authorize_request", func(t *testing.T) {
+		testAuthorizeRequest(t, app, dbs, conf)
+	})
 }
