@@ -33,6 +33,7 @@ type AppConfig struct {
 	ADMIN_PHONE							string
 	ADMIN_SALT_1						string
 	ADMIN_SALT_2						string
+	VAULTS_ACCESS_TOKEN			string
 	VAULTS_HOST							string
 	VAULTS_PORT							string
 	REDIS_PASSWORD          string
@@ -67,6 +68,7 @@ type envAbsPaths struct {
 	ADMIN_PHONE							string
 	ADMIN_SALT_1						string
 	ADMIN_SALT_2						string
+	VAULTS_ACCESS_TOKEN			string
 	VAULTS_HOST							string
 	VAULTS_PORT							string
 	EMAIL_HOST_USER					string

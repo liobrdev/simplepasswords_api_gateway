@@ -17,7 +17,9 @@ func Register(app *fiber.App, dbs *databases.Databases, conf *config.AppConfig) 
 	authApi.Post("/first_factor", H.AuthFirstFactor)
 	authApi.Post("/second_factor", H.AuthSecondFactor)
 
+	app.Use(H.AuthorizeRequest)
+
 	if H.Conf.ENVIRONMENT == "testing" {
-		authApi.Get("/restricted", H.AuthorizeRequest, H.Restricted)
+		authApi.Get("/restricted", H.Restricted)
 	}
 }
