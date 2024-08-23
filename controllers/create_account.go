@@ -6,6 +6,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"gorm.io/gorm"
 
+	"github.com/liobrdev/simplepasswords_api_gateway/config"
 	"github.com/liobrdev/simplepasswords_api_gateway/models"
 	"github.com/liobrdev/simplepasswords_api_gateway/utils"
 )
@@ -170,7 +171,7 @@ func (H Handler) CreateAccount(c *fiber.Ctx) error {
 	}
 
 	if H.Conf.ENVIRONMENT != "testing" {
-		if errorString := H.VaultsCreateUser(user.Slug); errorString != "" {
+		if errorString := vaultsCreateUser(H.Conf, user.Slug); errorString != "" {
 			H.logger(c, utils.CreateAccount, errorString, "", "error", utils.ErrorVaultsCreateUser)
 
 			return utils.RespondWithError(c, 500, utils.ErrorServer, nil, nil)
@@ -181,4 +182,30 @@ func (H Handler) CreateAccount(c *fiber.Ctx) error {
 		Token: 		sessionToken,
 		UserName:	user.Name,
 	})
+}
+
+func vaultsCreateUser(conf *config.AppConfig, userSlug string) string {
+	agent := fiber.Post("http://" + conf.VAULTS_HOST + ":" + conf.VAULTS_PORT + "/api/users")
+	agent.Set("Content-Type", "application/json")
+	agent.Set("Client-Operation", utils.CreateUser)
+	agent.Set("Authorization", "Token " + conf.VAULTS_ACCESS_TOKEN)
+
+	agent.JSON(fiber.Map{ "user_slug": userSlug })
+	statusCode, body, errs := agent.String()
+
+	var errorString string
+
+	if len(errs) > 0 {
+		for _, err := range errs {
+			errorString += err.Error() + ";;"
+		}
+
+		if body != "" {
+			errorString += body + ";;"
+		}
+	} else if statusCode != 204 && body != "" {
+		errorString += body + ";;"
+	}
+
+	return errorString
 }
