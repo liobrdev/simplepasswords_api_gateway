@@ -19,8 +19,8 @@ type CreateAccountRequestBody struct {
 }
 
 type CreateAccountResponseBody struct {
-	Token string			`json:"token"`
-	User  models.User `json:"user"`
+	Token 	 string	`json:"token"`
+	UserName string	`json:"user"`
 }
 
 func (H Handler) CreateAccount(c *fiber.Ctx) error {
@@ -177,16 +177,8 @@ func (H Handler) CreateAccount(c *fiber.Ctx) error {
 		}
 	}
 
-	hiddenUser := models.User{
-		Slug:					user.Slug,
-		Name:					user.Name,
-		EmailAddress:	utils.HideEmail(user.EmailAddress),
-		PhoneNumber:	utils.HidePhone(user.PhoneNumber),
-		IsActive: 		user.IsActive,
-	}
-
 	return c.Status(fiber.StatusCreated).JSON(&CreateAccountResponseBody{
-		Token: sessionToken,
-		User:  hiddenUser,
+		Token: 		sessionToken,
+		UserName:	user.Name,
 	})
 }

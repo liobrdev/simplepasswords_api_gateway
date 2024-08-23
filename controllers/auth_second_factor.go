@@ -17,8 +17,8 @@ type AuthSecondFactorRequestBody struct {
 }
 
 type AuthSecondFactorResponseBody struct {
-	Token string			`json:"token"`
-	User  models.User	`json:"user"`
+	Token		 string	`json:"token"`
+	UserName string	`json:"user"`
 }
 
 func (H Handler) AuthSecondFactor(c *fiber.Ctx) error {
@@ -99,16 +99,8 @@ func (H Handler) AuthSecondFactor(c *fiber.Ctx) error {
 		return utils.RespondWithError(c, 500, utils.ErrorServer, nil, nil)
 	}
 
-	hiddenUser := models.User{
-		Slug: 				mfaToken.UserSlug,
-		Name: 				mfaToken.User.Name,
-		EmailAddress:	utils.HideEmail(mfaToken.User.EmailAddress),
-		PhoneNumber:	utils.HidePhone(mfaToken.User.PhoneNumber),
-		IsActive: 		mfaToken.User.IsActive,
-	}
-
 	return c.Status(fiber.StatusOK).JSON(&AuthSecondFactorResponseBody{
-		Token: sessionToken,
-		User:  hiddenUser,
+		Token: 		sessionToken,
+		UserName:	mfaToken.User.Name,
 	})
 }

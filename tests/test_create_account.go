@@ -538,19 +538,10 @@ func testCreateAccountSuccess(
 
 		var user models.User
 		helpers.QueryTestUserByEmail(t, dbs.ApiGateway, &user, email)
-		require.Equal(t, user.Slug, createAcctRespBody.User.Slug)
-		require.Equal(t, user.Name, createAcctRespBody.User.Name)
-		require.Equal(t, utils.HideEmail(user.EmailAddress), createAcctRespBody.User.EmailAddress)
-		require.Equal(t, utils.HidePhone(user.PhoneNumber), createAcctRespBody.User.PhoneNumber)
-		require.Equal(t, user.IsActive, createAcctRespBody.User.IsActive)
-		require.Equal(t, true, createAcctRespBody.User.IsActive)
-		require.Empty(t, createAcctRespBody.User.CreatedAt)
-		require.Empty(t, createAcctRespBody.User.UpdatedAt)
-		require.Empty(t, createAcctRespBody.User.PasswordHash)
+		require.Equal(t, user.Name, createAcctRespBody.UserName)
 
 		var session models.ClientSession
 		helpers.QueryTestClientSessionLatest(t, dbs.ApiGateway, &session)
-		require.Equal(t, session.UserSlug, createAcctRespBody.User.Slug)
 		require.Equal(t, session.TokenKey, createAcctRespBody.Token[:16])
 		require.Equal(t, session.Digest, utils.HashToken(createAcctRespBody.Token))
 	}
