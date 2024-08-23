@@ -127,7 +127,7 @@ func (H Handler) AuthorizeRequest(c *fiber.Ctx) error {
 		// Throttle updates to 'expires_at' by 60 sec
 		if newExpiresAt.Sub(thisSession.ExpiresAt).Seconds() > 60 {
 			thisSession.ExpiresAt = newExpiresAt
-			H.DBs.ApiGateway.Save(thisSession)
+			H.DBs.ApiGateway.Save(&thisSession)
 		}
 	} else {
 		H.logger(
@@ -138,7 +138,7 @@ func (H Handler) AuthorizeRequest(c *fiber.Ctx) error {
 		return utils.RespondWithError(c, 401, utils.ErrorToken, nil, nil)
 	}
 
-	c.SetUserContext(context.WithValue(context.Background(), userContextKey{}, thisSession.User))
+	c.SetUserContext(context.WithValue(context.Background(), userContextKey{}, &thisSession.User))
 
 	return c.Next()
 }

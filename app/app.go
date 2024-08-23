@@ -9,11 +9,9 @@ import (
 	"github.com/gofiber/fiber/v2"
 
 	"github.com/liobrdev/simplepasswords_api_gateway/config"
-	"github.com/liobrdev/simplepasswords_api_gateway/databases"
-	"github.com/liobrdev/simplepasswords_api_gateway/routes"
 )
 
-func CreateApp(conf *config.AppConfig) (app *fiber.App, dbs *databases.Databases) {
+func CreateApp(conf *config.AppConfig) (app *fiber.App) {
 	var proxyHeader string
 	var trustedProxies []string
 
@@ -26,7 +24,7 @@ func CreateApp(conf *config.AppConfig) (app *fiber.App, dbs *databases.Databases
 		}
 	}
 
-	app = fiber.New(fiber.Config{
+	return fiber.New(fiber.Config{
 		CaseSensitive:           true,
 		EnableTrustedProxyCheck: conf.BEHIND_PROXY,
 		ProxyHeader:             proxyHeader,
@@ -35,11 +33,6 @@ func CreateApp(conf *config.AppConfig) (app *fiber.App, dbs *databases.Databases
 		JSONDecoder:             json.Unmarshal,
 		Prefork:                 true,
 	})
-
-	dbs = databases.Init(conf)
-	routes.Register(app, dbs, conf)
-
-	return app, dbs
 }
 
 func parseIPs(ipStrings *[]string) error {

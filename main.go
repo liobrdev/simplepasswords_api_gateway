@@ -3,9 +3,13 @@ package main
 import (
 	"log"
 
+	"github.com/gofiber/fiber/v2/middleware/healthcheck"
+
 	"github.com/liobrdev/simplepasswords_api_gateway/app"
 	"github.com/liobrdev/simplepasswords_api_gateway/config"
+	"github.com/liobrdev/simplepasswords_api_gateway/databases"
 	"github.com/liobrdev/simplepasswords_api_gateway/models"
+	"github.com/liobrdev/simplepasswords_api_gateway/routes"
 )
 
 func main() {
@@ -15,7 +19,8 @@ func main() {
 		log.Fatalln("Failed to load config from environment:", err)
 	}
 
-	app, dbs := app.CreateApp(&conf)
+	app := app.CreateApp(&conf)
+	dbs := databases.Init(&conf)
 
 	if err := dbs.ApiGateway.AutoMigrate(
 		&models.User{},
@@ -29,5 +34,8 @@ func main() {
 		log.Fatalln("Failed logger database auto-migrate:", err.Error())
 	}
 
-	log.Fatal(app.Listen(conf.API_GATEWAY_DB_USER + ":" + conf.API_GATEWAY_PORT))
+	app.Use(healthcheck.New())
+	routes.Register(app, dbs, &conf)
+
+	log.Fatal(app.Listen(conf.API_GATEWAY_HOST + ":" + conf.API_GATEWAY_PORT))
 }

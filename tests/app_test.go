@@ -8,6 +8,8 @@ import (
 	"github.com/liobrdev/simplepasswords_api_gateway/app"
 	"github.com/liobrdev/simplepasswords_api_gateway/config"
 	"github.com/liobrdev/simplepasswords_api_gateway/databases"
+	"github.com/liobrdev/simplepasswords_api_gateway/routes"
+	testDBs "github.com/liobrdev/simplepasswords_api_gateway/tests/databases"
 )
 
 func TestApp(t *testing.T) {
@@ -20,14 +22,18 @@ func TestApp(t *testing.T) {
 	t.Run("is_behind_proxy", func(t *testing.T) {
 		conf.GO_TESTING_CONTEXT = t
 		conf.BEHIND_PROXY = true
-		app, dbs := app.CreateApp(&conf)
+		app := app.CreateApp(&conf)
+		dbs := testDBs.Init(&conf)
+		routes.Register(app, dbs, &conf)
 		runTests(t, app, dbs, &conf)
 	})
 
 	t.Run("is_not_behind_proxy", func(t *testing.T) {
 		conf.GO_TESTING_CONTEXT = t
 		conf.BEHIND_PROXY = false
-		app, dbs := app.CreateApp(&conf)
+		app := app.CreateApp(&conf)
+		dbs := testDBs.Init(&conf)
+		routes.Register(app, dbs, &conf)
 		runTests(t, app, dbs, &conf)
 	})
 }

@@ -12,100 +12,81 @@ import (
 )
 
 type AppConfig struct {
-	ENVIRONMENT             string
-	BEHIND_PROXY            bool
-	PROXY_IP_ADDRESSES      []string
-	API_GATEWAY_DB_USER     string
-	API_GATEWAY_DB_PASSWORD string
-	API_GATEWAY_DB_HOST     string
-	API_GATEWAY_DB_PORT     string
-	API_GATEWAY_DB_NAME     string
-	LOGGER_DB_USER          string
-	LOGGER_DB_PASSWORD      string
-	LOGGER_DB_HOST          string
-	LOGGER_DB_PORT          string
-	LOGGER_DB_NAME          string
-	SECRET_KEY              string
-	API_GATEWAY_HOST				string
-	API_GATEWAY_PORT				string
-	ADMIN_NAME							string
 	ADMIN_EMAIL							string
+	ADMIN_NAME							string
 	ADMIN_PHONE							string
 	ADMIN_SALT_1						string
 	ADMIN_SALT_2						string
-	VAULTS_ACCESS_TOKEN			string
-	VAULTS_HOST							string
-	VAULTS_PORT							string
-	REDIS_PASSWORD          string
-	EMAIL_HOST_USER					string
-  EMAIL_HOST_PASSWORD			string
+	API_GATEWAY_DB_HOST			string
+	API_GATEWAY_DB_NAME			string
+	API_GATEWAY_DB_PASSWORD	string
+	API_GATEWAY_DB_PORT			string
+	API_GATEWAY_DB_USER			string
+	API_GATEWAY_HOST				string
+	API_GATEWAY_PORT				string
+	BEHIND_PROXY						bool
+	ENVIRONMENT							string
+	LOGGER_DB_HOST					string
+	LOGGER_DB_NAME					string
+	LOGGER_DB_PASSWORD			string
+	LOGGER_DB_PORT					string
+	LOGGER_DB_USER					string
+	PROXY_IP_ADDRESSES			[]string
+	REDIS_PASSWORD					string
+	SECRET_KEY							string
 	TWILIO_ACCOUNT_SID			string
 	TWILIO_AUTH_TOKEN				string
 	TWILIO_PHONE_NUMBER			string
+	VAULTS_ACCESS_TOKEN			string
+	VAULTS_HOST							string
+	VAULTS_PORT							string
 	GO_TESTING_CONTEXT			*testing.T
 }
 
 type envAbsPaths struct {
-	ENVIRONMENT             string
-	BEHIND_PROXY            string
-	PROXY_IP_ADDRESSES      string
-	API_GATEWAY_DB_USER     string
-	API_GATEWAY_DB_PASSWORD string
-	API_GATEWAY_DB_HOST     string
-	API_GATEWAY_DB_PORT     string
-	API_GATEWAY_DB_NAME     string
-	LOGGER_DB_USER          string
-	LOGGER_DB_PASSWORD      string
-	LOGGER_DB_HOST          string
-	LOGGER_DB_PORT          string
-	LOGGER_DB_NAME          string
-	REDIS_PASSWORD          string
-	SECRET_KEY              string
-	API_GATEWAY_HOST				string
-	API_GATEWAY_PORT				string
-	ADMIN_NAME							string
 	ADMIN_EMAIL							string
+	ADMIN_NAME							string
 	ADMIN_PHONE							string
 	ADMIN_SALT_1						string
 	ADMIN_SALT_2						string
-	VAULTS_ACCESS_TOKEN			string
-	VAULTS_HOST							string
-	VAULTS_PORT							string
-	EMAIL_HOST_USER					string
-  EMAIL_HOST_PASSWORD			string
+	API_GATEWAY_DB_HOST			string
+	API_GATEWAY_DB_NAME			string
+	API_GATEWAY_DB_PASSWORD	string
+	API_GATEWAY_DB_PORT			string
+	API_GATEWAY_DB_USER			string
+	API_GATEWAY_HOST				string
+	API_GATEWAY_PORT				string
+	BEHIND_PROXY						string
+	ENVIRONMENT							string
+	LOGGER_DB_HOST					string
+	LOGGER_DB_NAME					string
+	LOGGER_DB_PASSWORD			string
+	LOGGER_DB_PORT					string
+	LOGGER_DB_USER					string
+	PROXY_IP_ADDRESSES			string
+	REDIS_PASSWORD					string
+	SECRET_KEY							string
 	TWILIO_ACCOUNT_SID			string
 	TWILIO_AUTH_TOKEN				string
 	TWILIO_PHONE_NUMBER			string
+	VAULTS_ACCESS_TOKEN			string
+	VAULTS_HOST							string
+	VAULTS_PORT							string
 }
 
-func getDefaultConfigValue(fieldName string) string {
-	var defaultConfigValue string
-
-	if fieldName == "ENVIRONMENT" {
-		defaultConfigValue = "development"
-	} else if fieldName == "API_GATEWAY_HOST" {
-		defaultConfigValue = "localhost"
-	} else if fieldName == "API_GATEWAY_PORT" {
-		defaultConfigValue = "5050"
-	} else if fieldName == "VAULTS_HOST" {
-		defaultConfigValue = "localhost"
-	} else if fieldName == "VAULTS_PORT" {
-		defaultConfigValue = "8080"
-	}
-
-	return defaultConfigValue
-}
-
-func scanFileFirstLineToConf(file *os.File, path string, fieldName string, conf *AppConfig,
-confElem *reflect.Value) {
+func scanFileFirstLineToConf(
+	file *os.File, conf *AppConfig, confElem *reflect.Value, path, fieldName string, 
+) {
 	scanner := bufio.NewScanner(file)
 	scanner.Scan()
 
 	if contents := scanner.Text(); scanner.Err() != nil {
 		log.Fatalf(
-			"Error reading contents of '%s' from environment variable %s:\n%s", path, fieldName,
-			scanner.Err(),
+			"Error reading contents of '%s' from environment variable %s:\n%s",
+			path, fieldName, scanner.Err(),
 		)
+	} else if contents == "" {
+		log.Fatalf("Empty contents of '%s' from environment variable %s", path, fieldName)
 	} else if fieldName == "BEHIND_PROXY" {
 		if contents == "true" {
 			conf.BEHIND_PROXY = true
@@ -114,8 +95,6 @@ confElem *reflect.Value) {
 		}
 	} else if fieldName == "PROXY_IP_ADDRESSES" {
 		conf.PROXY_IP_ADDRESSES = strings.Split(contents, ",")
-	} else if contents == "" {
-		confElem.FieldByName(fieldName).SetString(getDefaultConfigValue(fieldName))
 	} else {
 		confElem.FieldByName(fieldName).SetString(contents)
 	}
@@ -144,7 +123,7 @@ func loadFileContentsFromPathsToConf(
 
 		defer file.Close()
 
-		scanFileFirstLineToConf(file, path, fieldName, conf, &confElem)
+		scanFileFirstLineToConf(file, conf, &confElem, path, fieldName)
 	}
 }
 
@@ -153,7 +132,7 @@ func LoadConfigFromEnv(conf *AppConfig) (err error) {
 	viper.AutomaticEnv()
 
 	if err = viper.ReadInConfig(); err != nil {
-		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+		if err.Error() == "open ./.env: no such file or directory" {
 			err = nil
 		} else {
 			return

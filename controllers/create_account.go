@@ -170,7 +170,7 @@ func (H Handler) CreateAccount(c *fiber.Ctx) error {
 	}
 
 	if H.Conf.ENVIRONMENT != "testing" {
-		if errorString := H.vaultsCreateUser(user.Slug); errorString != "" {
+		if errorString := H.VaultsCreateUser(user.Slug); errorString != "" {
 			H.logger(c, utils.CreateAccount, errorString, "", "error", utils.ErrorVaultsCreateUser)
 
 			return utils.RespondWithError(c, 500, utils.ErrorServer, nil, nil)
@@ -189,26 +189,4 @@ func (H Handler) CreateAccount(c *fiber.Ctx) error {
 		Token: sessionToken,
 		User:  hiddenUser,
 	})
-}
-
-func (H Handler) vaultsCreateUser(userSlug string) string {
-	agent := fiber.Post("http://" + H.Conf.VAULTS_HOST + ":" + H.Conf.VAULTS_PORT + "/api/users")
-	agent.JSON(fiber.Map{ "user_slug": userSlug })
-	statusCode, body, errs := agent.String()
-
-	var errorString string
-
-	if len(errs) > 0 {
-		for _, err := range errs {
-			errorString += err.Error() + ";;"
-		}
-
-		if body != "" {
-			errorString += body + ";;"
-		}
-	} else if statusCode != 204 && body != "" {
-		errorString += body + ";;"
-	}
-
-	return errorString
 }
