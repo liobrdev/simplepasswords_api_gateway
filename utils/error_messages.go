@@ -14,6 +14,7 @@ const (
 	ErrorVaultsRetrieveVault	string = "Failed vaults API retrieve_vault."
 	ErrorVaultsUpdateVault		string = "Failed vaults API update_vault."
 	ErrorVaultsDeleteVault		string = "Failed vaults API delete_vault."
+	ErrorVaultsCreateEntry		string = "Failed vaults API create_entry."
 	ErrorVaultsDeleteUser			string = "Failed vaults API delete_user."
 	ErrorFailedDB       			string = "Failed DB operation."
 	ErrorNoRowsAffected 			string = "result.RowsAffected == 0"
