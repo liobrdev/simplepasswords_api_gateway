@@ -30,7 +30,7 @@ func Register(app *fiber.App, dbs *databases.Databases, conf *config.AppConfig) 
 	vaultsApi.Post("/", H.VaultsCreateVault)
 	vaultsApi.Get("/", H.VaultsListVaults)
 	vaultsApi.Get("/:slug", H.VaultsRetrieveVault)
-	// vaultsApi.Patch("/:slug", H.UpdateVault)
+	vaultsApi.Patch("/:slug", H.VaultsUpdateVault)
 	// vaultsApi.Delete("/:slug", H.DeleteVault)
 
 	// entriesApi := api.Group("/entries")
