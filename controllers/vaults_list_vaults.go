@@ -7,7 +7,7 @@ import (
 	"github.com/liobrdev/simplepasswords_api_gateway/utils"
 )
 
-func (H Handler) VaultsRetrieveUser(c *fiber.Ctx) error {
+func (H Handler) VaultsListVaults(c *fiber.Ctx) error {
 	var user *models.User
 	var ok bool
 
@@ -17,13 +17,12 @@ func (H Handler) VaultsRetrieveUser(c *fiber.Ctx) error {
 		return utils.RespondWithError(c, 500, utils.ErrorServer, nil, nil)
 	}
 
-	agent := fiber.Get(
-		"http://" + H.Conf.VAULTS_HOST + ":" + H.Conf.VAULTS_PORT + "/api/users/" + user.Slug,
-	)
-
+	agent := fiber.Get("http://" + H.Conf.VAULTS_HOST + ":" + H.Conf.VAULTS_PORT + "/api/vaults")
 	agent.Set("Content-Type", "application/json")
-	agent.Set("Client-Operation", utils.RetrieveUser)
+	agent.Set("Client-Operation", utils.ListVaults)
 	agent.Set("Authorization", "Token " + H.Conf.VAULTS_ACCESS_TOKEN)
+	agent.Set("User-Slug", user.Slug )
+
 	statusCode, body, errs := agent.String()
 
 	var errorString string
@@ -43,10 +42,10 @@ func (H Handler) VaultsRetrieveUser(c *fiber.Ctx) error {
 			errorString += body + ";;"
 		}
 
-		H.logger(c, utils.RetrieveUser, errorString, "", "error", utils.ErrorVaultsRetrieveUser)
+		H.logger(c, utils.ListVaults, errorString, "", "error", utils.ErrorVaultsListVaults)
 
 		return utils.RespondWithError(c, 500, utils.ErrorServer, nil, nil)
 	}
 
-	return c.Status(200).JSON(body)
+	return c.Status(200).Send([]byte(body))
 }

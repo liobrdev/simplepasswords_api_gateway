@@ -10,7 +10,7 @@ const (
 	ErrorCreateUser     		string = "Failed create user transaction."
 	ErrorVaultsCreateUser		string = "Failed vaults API create_user."
 	ErrorVaultsDeleteUser		string = "Failed vaults API delete_user."
-	ErrorVaultsRetrieveUser	string = "Failed vaults API retrieve_user."
+	ErrorVaultsListVaults		string = "Failed vaults API list_vaults."
 	ErrorFailedDB       		string = "Failed DB operation."
 	ErrorNoRowsAffected 		string = "result.RowsAffected == 0"
 	ErrorIPMismatch 				string = "Different IP addresses."
