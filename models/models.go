@@ -6,9 +6,9 @@ type User struct {
 	Slug            string    `json:"user_slug" gorm:"primaryKey;not null"`
 	PasswordHash    []byte    `json:"-" gorm:"not null"`
 	Name            string    `json:"name" gorm:"not null"`
-	EmailAddress    string    `json:"email_address" gorm:"unique;not null"`
-	PhoneNumber     string    `json:"phone_number" gorm:"unique;not null"`
-	IsActive        bool      `json:"is_active" gorm:"default:true;not null"`
+	EmailAddress    string    `json:"email_address,omitempty" gorm:"unique;not null"`
+	PhoneNumber     string    `json:"phone_number,omitempty" gorm:"unique;not null"`
+	IsActive        bool      `json:"-" gorm:"default:true;not null"`
 	CreatedAt       time.Time `json:"-" gorm:"autoCreateTime:nano;not null"`
 	UpdatedAt       time.Time `json:"-" gorm:"autoUpdateTime:nano;not null"`
 }

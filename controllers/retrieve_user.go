@@ -7,10 +7,6 @@ import (
 	"github.com/liobrdev/simplepasswords_api_gateway/utils"
 )
 
-type RetrieveUserResponseBody struct {
-	Name string `json:"user_name"`
-}
-
 func (H Handler) RetrieveUser(c *fiber.Ctx) error {
 	var user *models.User
 	var ok bool
@@ -21,5 +17,5 @@ func (H Handler) RetrieveUser(c *fiber.Ctx) error {
 		return utils.RespondWithError(c, 500, utils.ErrorServer, nil, nil)
 	}
 
-	return c.Status(200).JSON(&RetrieveUserResponseBody{ Name: user.Name })
+	return c.Status(200).JSON(&models.User{ Slug: user.Slug, Name: user.Name })
 }

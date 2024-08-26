@@ -403,7 +403,8 @@ func testAuthSecondFactorSuccess(
 
 		var user models.User
 		helpers.QueryTestUserByEmail(t, dbs.ApiGateway, &user, email)
-		require.Equal(t, user.Name, authSecondFactorRespBody.UserName)		
+		require.Equal(t, user.Slug, authSecondFactorRespBody.User.Slug)
+		require.Equal(t, user.Name, authSecondFactorRespBody.User.Name)
 
 		var session models.ClientSession
 		helpers.QueryTestClientSessionLatest(t, dbs.ApiGateway, &session)

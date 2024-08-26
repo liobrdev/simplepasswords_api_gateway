@@ -538,7 +538,8 @@ func testCreateAccountSuccess(
 
 		var user models.User
 		helpers.QueryTestUserByEmail(t, dbs.ApiGateway, &user, email)
-		require.Equal(t, user.Name, createAcctRespBody.UserName)
+		require.Equal(t, user.Slug, createAcctRespBody.User.Slug)
+		require.Equal(t, user.Name, createAcctRespBody.User.Name)
 
 		var session models.ClientSession
 		helpers.QueryTestClientSessionLatest(t, dbs.ApiGateway, &session)

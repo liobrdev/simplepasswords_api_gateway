@@ -11,8 +11,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/liobrdev/simplepasswords_api_gateway/config"
-	"github.com/liobrdev/simplepasswords_api_gateway/controllers"
 	"github.com/liobrdev/simplepasswords_api_gateway/databases"
+	"github.com/liobrdev/simplepasswords_api_gateway/models"
 	"github.com/liobrdev/simplepasswords_api_gateway/tests/helpers"
 	"github.com/liobrdev/simplepasswords_api_gateway/tests/setup"
 	"github.com/liobrdev/simplepasswords_api_gateway/utils"
@@ -28,26 +28,27 @@ func testRetrieveUser(
 		helpers.CountClientSessions(t, dbs.ApiGateway, &sessionCount)
 		require.EqualValues(t, 4, sessionCount)
 
-		testRetrieveUserSuccess(t, app, user.Name, "Token " + validSessionTokens[0])
+		testRetrieveUserSuccess(t, app, user.Slug, user.Name, "Token " + validSessionTokens[0])
 		helpers.CountClientSessions(t, dbs.ApiGateway, &sessionCount)
 		require.EqualValues(t, 2, sessionCount)
 	})
 }
 
-func testRetrieveUserSuccess(t *testing.T, app *fiber.App, userName, authHeader string) {
+func testRetrieveUserSuccess(t *testing.T, app *fiber.App, slug, name, authHeader string) {
 	resp := newRequestRetrieveUser(t, app, authHeader)
 	require.Equal(t, 200, resp.StatusCode)
 
 	if respBody, err := io.ReadAll(resp.Body); err != nil {
 		t.Fatalf("Read response body failed: %s", err.Error())
 	} else {
-		var retrieveUserRespBody controllers.RetrieveUserResponseBody
+		var user models.User
 
-		if err := json.Unmarshal(respBody, &retrieveUserRespBody); err != nil {
+		if err := json.Unmarshal(respBody, &user); err != nil {
 			t.Fatalf("JSON unmarshal failed: %s", err.Error())
 		}
 
-		require.Equal(t, userName, retrieveUserRespBody.Name)
+		require.Equal(t, slug, user.Slug)
+		require.Equal(t, name, user.Name)
 	}
 }
 

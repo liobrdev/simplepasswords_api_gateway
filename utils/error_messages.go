@@ -9,6 +9,7 @@ const (
 	ErrorNonMatchPW     		string = "Non-matching password inputs."
 	ErrorCreateUser     		string = "Failed create user transaction."
 	ErrorVaultsCreateUser		string = "Failed vaults API create_user."
+	ErrorVaultsCreateVault	string = "Failed vaults API create_vault."
 	ErrorVaultsDeleteUser		string = "Failed vaults API delete_user."
 	ErrorVaultsListVaults		string = "Failed vaults API list_vaults."
 	ErrorFailedDB       		string = "Failed DB operation."

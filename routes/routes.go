@@ -28,7 +28,7 @@ func Register(app *fiber.App, dbs *databases.Databases, conf *config.AppConfig) 
 
 	vaultsApi := api.Group("/vaults")
 	vaultsApi.Get("/", H.VaultsListVaults)
-	// vaultsApi.Post("/", H.CreateVault)
+	vaultsApi.Post("/", H.VaultsCreateVault)
 	// vaultsApi.Get("/:slug", H.RetrieveVault)
 	// vaultsApi.Patch("/:slug", H.UpdateVault)
 	// vaultsApi.Delete("/:slug", H.DeleteVault)

@@ -12,7 +12,7 @@ func (H Handler) VaultsListVaults(c *fiber.Ctx) error {
 	var ok bool
 
 	if user, ok = c.UserContext().Value(userContextKey{}).(*models.User); !ok {
-		H.logger(c, utils.RetrieveUser, "", "", "error", "Failed user context")
+		H.logger(c, utils.ListVaults, "", "", "error", "Failed user context")
 
 		return utils.RespondWithError(c, 500, utils.ErrorServer, nil, nil)
 	}
@@ -23,26 +23,10 @@ func (H Handler) VaultsListVaults(c *fiber.Ctx) error {
 	agent.Set("Authorization", "Token " + H.Conf.VAULTS_ACCESS_TOKEN)
 	agent.Set("User-Slug", user.Slug )
 
-	statusCode, body, errs := agent.String()
+	_, body, errString := checkVaultsResponse(agent)
 
-	var errorString string
-
-	if len(errs) > 0 {
-		for _, err := range errs {
-			errorString += err.Error() + ";;"
-		}
-
-		if body != "" {
-			errorString += body + ";;"
-		}
-	}
-
-	if statusCode != 200 {
-		if body != "" {
-			errorString += body + ";;"
-		}
-
-		H.logger(c, utils.ListVaults, errorString, "", "error", utils.ErrorVaultsListVaults)
+	if errString != "" {
+		H.logger(c, utils.ListVaults, errString, "", "error", utils.ErrorVaultsListVaults)
 
 		return utils.RespondWithError(c, 500, utils.ErrorServer, nil, nil)
 	}

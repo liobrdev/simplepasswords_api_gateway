@@ -19,6 +19,28 @@ type Handler struct {
 	Conf *config.AppConfig
 }
 
+func checkVaultsResponse(agent *fiber.Agent) (statusCode int, body, errString string) {
+	statusCode, body, errs := agent.String()
+
+	if len(errs) > 0 {
+		for _, err := range errs {
+			errString += err.Error() + ";;"
+		}
+
+		if body != "" {
+			errString += body + ";;"
+		}
+	}
+
+	if statusCode != 200 && statusCode != 201 && statusCode != 204 {
+		if body != "" {
+			errString += body + ";;"
+		}
+	}
+
+	return statusCode, body, errString
+}
+
 func (H Handler) createLog(
 	c *fiber.Ctx, caller, clientOperation, detail, extra, level, message string,
 ) {
