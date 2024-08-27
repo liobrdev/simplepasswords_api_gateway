@@ -7,8 +7,9 @@ import (
 )
 
 type reqBodySecret struct {
-	Label  string `json:"secret_label"`
-	String string `json:"secret_string"`
+	Label  	 string	`json:"secret_label"`
+	String 	 string	`json:"secret_string"`
+	Priority uint8 	`json:"secret_priority"`
 }
 
 type CreateEntryRequestBody struct {
