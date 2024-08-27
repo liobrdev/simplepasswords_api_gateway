@@ -36,7 +36,7 @@ func Register(app *fiber.App, dbs *databases.Databases, conf *config.AppConfig) 
 	entriesApi := api.Group("/entries")
 	entriesApi.Post("/", H.VaultsCreateEntry)
 	entriesApi.Get("/:slug", H.VaultsRetrieveEntry)
-	// entriesApi.Patch("/:slug", H.UpdateEntry)
+	entriesApi.Patch("/:slug", H.VaultsUpdateEntry)
 	// entriesApi.Delete("/:slug", H.DeleteEntry)
 
 	// secretsApi := api.Group("/secrets")
