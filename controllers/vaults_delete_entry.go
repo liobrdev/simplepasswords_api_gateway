@@ -7,6 +7,12 @@ import (
 )
 
 func (H Handler) VaultsDeleteEntry(c *fiber.Ctx) error {
+	if header := c.Get("Client-Operation"); header != utils.DeleteEntry {
+		H.logger(c, utils.DeleteEntry, header, "", "warn", utils.ErrorClientOperation)
+
+		return utils.RespondWithError(c, 400, utils.ErrorBadRequest, nil, nil)
+	}
+
 	slug := c.Params("slug")
 
 	agent := fiber.Delete(

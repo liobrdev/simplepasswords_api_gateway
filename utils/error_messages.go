@@ -1,6 +1,7 @@
 package utils
 
 const (
+	ErrorClientOperation			string = "Non-matching client operation header."
 	ErrorParse          			string = "Failed to parse request body."
 	ErrorAcctName       			string = "Invalid `name`."
 	ErrorAcctEmail      			string = "Invalid `email`."

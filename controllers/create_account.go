@@ -25,6 +25,12 @@ type CreateAccountResponseBody struct {
 }
 
 func (H Handler) CreateAccount(c *fiber.Ctx) error {
+	if header := c.Get("Client-Operation"); header != utils.CreateAccount {
+		H.logger(c, utils.CreateAccount, header, "", "warn", utils.ErrorClientOperation)
+
+		return utils.RespondWithError(c, 400, utils.ErrorBadRequest, nil, nil)
+	}
+
 	body := CreateAccountRequestBody{}
 
 	if err := c.BodyParser(&body); err != nil {

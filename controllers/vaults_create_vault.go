@@ -12,6 +12,12 @@ type CreateVaultRequestBody struct {
 }
 
 func (H Handler) VaultsCreateVault(c *fiber.Ctx) error {
+	if header := c.Get("Client-Operation"); header != utils.CreateVault {
+		H.logger(c, utils.CreateVault, header, "", "warn", utils.ErrorClientOperation)
+
+		return utils.RespondWithError(c, 400, utils.ErrorBadRequest, nil, nil)
+	}
+
 	reqBody := CreateVaultRequestBody{}
 
 	if err := c.BodyParser(&reqBody); err != nil {

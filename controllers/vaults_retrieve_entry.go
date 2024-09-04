@@ -7,6 +7,12 @@ import (
 )
 
 func (H Handler) VaultsRetrieveEntry(c *fiber.Ctx) error {
+	if header := c.Get("Client-Operation"); header != utils.RetrieveEntry {
+		H.logger(c, utils.RetrieveEntry, header, "", "warn", utils.ErrorClientOperation)
+
+		return utils.RespondWithError(c, 400, utils.ErrorBadRequest, nil, nil)
+	}
+
 	slug := c.Params("slug")
 
 	agent := fiber.Get(

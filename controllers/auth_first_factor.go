@@ -23,6 +23,12 @@ type AuthFirstFactorResponseBody struct {
 }
 
 func (H Handler) AuthFirstFactor(c *fiber.Ctx) error {
+	if header := c.Get("Client-Operation"); header != utils.AuthFirstFactor {
+		H.logger(c, utils.AuthFirstFactor, header, "", "warn", utils.ErrorClientOperation)
+
+		return utils.RespondWithError(c, 400, utils.ErrorBadRequest, nil, nil)
+	}
+
 	body := AuthFirstFactorRequestBody{}
 
 	if err := c.BodyParser(&body); err != nil {

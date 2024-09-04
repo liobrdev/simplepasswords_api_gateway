@@ -11,6 +11,12 @@ type UpdateEntryRequestBody struct {
 }
 
 func (H Handler) VaultsUpdateEntry(c *fiber.Ctx) error {
+	if header := c.Get("Client-Operation"); header != utils.UpdateEntry {
+		H.logger(c, utils.UpdateEntry, header, "", "warn", utils.ErrorClientOperation)
+
+		return utils.RespondWithError(c, 400, utils.ErrorBadRequest, nil, nil)
+	}
+
 	reqBody := UpdateEntryRequestBody{}
 
 	if err := c.BodyParser(&reqBody); err != nil {

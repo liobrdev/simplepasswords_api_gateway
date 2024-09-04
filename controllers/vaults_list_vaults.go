@@ -8,6 +8,12 @@ import (
 )
 
 func (H Handler) VaultsListVaults(c *fiber.Ctx) error {
+	if header := c.Get("Client-Operation"); header != utils.ListVaults {
+		H.logger(c, utils.ListVaults, header, "", "warn", utils.ErrorClientOperation)
+
+		return utils.RespondWithError(c, 400, utils.ErrorBadRequest, nil, nil)
+	}
+
 	var user *models.User
 	var ok bool
 

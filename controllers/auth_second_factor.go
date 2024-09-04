@@ -22,6 +22,12 @@ type AuthSecondFactorResponseBody struct {
 }
 
 func (H Handler) AuthSecondFactor(c *fiber.Ctx) error {
+	if header := c.Get("Client-Operation"); header != utils.AuthSecondFactor {
+		H.logger(c, utils.AuthSecondFactor, header, "", "warn", utils.ErrorClientOperation)
+
+		return utils.RespondWithError(c, 400, utils.ErrorBadRequest, nil, nil)
+	}
+
 	body := AuthSecondFactorRequestBody{}
 
 	if err := c.BodyParser(&body); err != nil {
