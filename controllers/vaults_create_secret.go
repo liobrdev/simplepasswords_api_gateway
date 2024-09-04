@@ -7,11 +7,12 @@ import (
 )
 
 type CreateSecretRequestBody struct {
-	UserSlug     string `json:"user_slug"`
-	VaultSlug    string `json:"vault_slug"`
-	EntrySlug    string `json:"entry_slug"`
-	SecretLabel  string `json:"secret_label"`
-	SecretString string `json:"secret_string"`
+	UserSlug			 string `json:"user_slug"`
+	VaultSlug			 string `json:"vault_slug"`
+	EntrySlug			 string `json:"entry_slug"`
+	SecretLabel		 string `json:"secret_label"`
+	SecretString	 string `json:"secret_string"`
+	SecretPriority uint8	`json:"secret_priority"`
 }
 
 func (H Handler) VaultsCreateSecret(c *fiber.Ctx) error {
