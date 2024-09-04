@@ -50,9 +50,24 @@ func testAuthSecondFactor(
 
 	setup.SetUpLogger(t, dbs)
 
+	t.Run("wrong_client_operation_header_400_bad_request", func(t *testing.T) {
+		body := fmt.Sprintf(bodyFmt, dummyMFAToken, dummyPhoneOTP)
+
+		testAuthSecondFactorClientError(
+			t, app, dbs, "wrong_operation", body, 400, utils.ErrorBadRequest, nil, nil, &models.Log{
+				ClientIP:        clientIP,
+				ClientOperation: utils.AuthSecondFactor,
+				Detail:          "wrong_operation",
+				Level:           "warn",
+				Message:         utils.ErrorClientOperation,
+				RequestBody:     body,
+			},
+		)
+	})
+
 	t.Run("empty_body_400_bad_request", func(t *testing.T) {
 		testAuthSecondFactorClientError(
-			t, app, dbs, "", 400, utils.ErrorBadRequest, nil, nil, &models.Log{
+			t, app, dbs, utils.AuthSecondFactor, "", 400, utils.ErrorBadRequest, nil, nil, &models.Log{
 				ClientIP:        clientIP,
 				ClientOperation: utils.AuthSecondFactor,
 				Detail:          "invalid character '\x00' looking for beginning of value",
@@ -65,7 +80,7 @@ func testAuthSecondFactor(
 
 	t.Run("array_body_400_bad_request", func(t *testing.T) {
 		testAuthSecondFactorClientError(
-			t, app, dbs, "[]", 400, utils.ErrorBadRequest, nil, nil, &models.Log{
+			t, app, dbs, utils.AuthSecondFactor, "[]", 400, utils.ErrorBadRequest, nil, nil, &models.Log{
 				ClientIP:        clientIP,
 				ClientOperation: utils.AuthSecondFactor,
 				Detail:          "invalid character '[' looking for beginning of value",
@@ -76,7 +91,8 @@ func testAuthSecondFactor(
 		)
 
 		testAuthSecondFactorClientError(
-			t, app, dbs, "[{}]", 400, utils.ErrorBadRequest, nil, nil, &models.Log{
+			t, app, dbs, utils.AuthSecondFactor, "[{}]", 400, utils.ErrorBadRequest, nil, nil,
+			&models.Log{
 				ClientIP:        clientIP,
 				ClientOperation: utils.AuthSecondFactor,
 				Detail:          "invalid character '[' looking for beginning of value",
@@ -89,7 +105,7 @@ func testAuthSecondFactor(
 		body := `[` + fmt.Sprintf(bodyFmt, dummyMFAToken, dummyPhoneOTP) + `]`
 
 		testAuthSecondFactorClientError(
-			t, app, dbs, body, 400, utils.ErrorBadRequest, nil, nil, &models.Log{
+			t, app, dbs, utils.AuthSecondFactor, body, 400, utils.ErrorBadRequest, nil, nil, &models.Log{
 				ClientIP:        clientIP,
 				ClientOperation: utils.AuthSecondFactor,
 				Detail:          "invalid character '[' looking for beginning of value",
@@ -102,7 +118,8 @@ func testAuthSecondFactor(
 
 	t.Run("null_body_400_bad_request", func(t *testing.T) {
 		testAuthSecondFactorClientError(
-			t, app, dbs, "null", 400, utils.ErrorBadRequest, nil, nil, &models.Log{
+			t, app, dbs, utils.AuthSecondFactor, "null", 400, utils.ErrorBadRequest, nil, nil,
+			&models.Log{
 				ClientIP:        clientIP,
 				ClientOperation: utils.AuthSecondFactor,
 				Detail:          "",
@@ -115,7 +132,8 @@ func testAuthSecondFactor(
 
 	t.Run("boolean_body_400_bad_request", func(t *testing.T) {
 		testAuthSecondFactorClientError(
-			t, app, dbs, "true", 400, utils.ErrorBadRequest, nil, nil, &models.Log{
+			t, app, dbs, utils.AuthSecondFactor, "true", 400, utils.ErrorBadRequest, nil, nil,
+			&models.Log{
 				ClientIP:        clientIP,
 				ClientOperation: utils.AuthSecondFactor,
 				Detail:          "invalid character 't' looking for beginning of value",
@@ -126,7 +144,8 @@ func testAuthSecondFactor(
 		)
 
 		testAuthSecondFactorClientError(
-			t, app, dbs, "false", 400, utils.ErrorBadRequest, nil, nil, &models.Log{
+			t, app, dbs, utils.AuthSecondFactor, "false", 400, utils.ErrorBadRequest, nil, nil,
+			&models.Log{
 				ClientIP:        clientIP,
 				ClientOperation: utils.AuthSecondFactor,
 				Detail:          "invalid character 'f' looking for beginning of value",
@@ -139,8 +158,8 @@ func testAuthSecondFactor(
 
 	t.Run("string_body_400_bad_request", func(t *testing.T) {
 		testAuthSecondFactorClientError(
-			t, app, dbs, `"Valid JSON, but not an object."`, 400, utils.ErrorBadRequest, nil, nil,
-			&models.Log{
+			t, app, dbs, utils.AuthSecondFactor, `"Valid JSON, but not an object."`, 400,
+			utils.ErrorBadRequest, nil, nil, &models.Log{
 				ClientIP:        clientIP,
 				ClientOperation: utils.AuthSecondFactor,
 				Detail:          `invalid character '"' looking for beginning of value`,
@@ -153,7 +172,7 @@ func testAuthSecondFactor(
 
 	t.Run("empty_object_body_400_bad_request", func(t *testing.T) {
 		testAuthSecondFactorClientError(
-			t, app, dbs, "{}", 400, utils.ErrorBadRequest, nil, nil, &models.Log{
+			t, app, dbs, utils.AuthSecondFactor, "{}", 400, utils.ErrorBadRequest, nil, nil, &models.Log{
 				ClientIP:        clientIP,
 				ClientOperation: utils.AuthSecondFactor,
 				Detail:          "",
@@ -168,7 +187,7 @@ func testAuthSecondFactor(
 		body := fmt.Sprintf(`{"maf_token":"%s","phone_otp":"%s"}`, dummyMFAToken, dummyPhoneOTP)
 
 		testAuthSecondFactorClientError(
-			t, app, dbs, body, 400, utils.ErrorBadRequest, nil, nil, &models.Log{
+			t, app, dbs, utils.AuthSecondFactor, body, 400, utils.ErrorBadRequest, nil, nil, &models.Log{
 				ClientIP:        clientIP,
 				ClientOperation: utils.AuthSecondFactor,
 				Detail:          "",
@@ -183,7 +202,7 @@ func testAuthSecondFactor(
 		body := `{"mfa_token":null,"phone_otp":"` + dummyPhoneOTP + `"}`
 
 		testAuthSecondFactorClientError(
-			t, app, dbs, body, 400, utils.ErrorBadRequest, nil, nil, &models.Log{
+			t, app, dbs, utils.AuthSecondFactor, body, 400, utils.ErrorBadRequest, nil, nil, &models.Log{
 				ClientIP:        clientIP,
 				ClientOperation: utils.AuthSecondFactor,
 				Detail:          "",
@@ -198,7 +217,7 @@ func testAuthSecondFactor(
 		body := fmt.Sprintf(bodyFmt, "", dummyPhoneOTP)
 
 		testAuthSecondFactorClientError(
-			t, app, dbs, body, 400, utils.ErrorBadRequest, nil, nil, &models.Log{
+			t, app, dbs, utils.AuthSecondFactor, body, 400, utils.ErrorBadRequest, nil, nil, &models.Log{
 				ClientIP:        clientIP,
 				ClientOperation: utils.AuthSecondFactor,
 				Detail:          "",
@@ -213,7 +232,7 @@ func testAuthSecondFactor(
 		body := fmt.Sprintf(bodyFmt, dummyMFAToken + "1", dummyPhoneOTP)
 
 		testAuthSecondFactorClientError(
-			t, app, dbs, body, 400, utils.ErrorBadRequest, nil, nil, &models.Log{
+			t, app, dbs, utils.AuthSecondFactor, body, 400, utils.ErrorBadRequest, nil, nil, &models.Log{
 				ClientIP:        clientIP,
 				ClientOperation: utils.AuthSecondFactor,
 				Detail:          dummyMFAToken + "1",
@@ -228,7 +247,7 @@ func testAuthSecondFactor(
 		body := fmt.Sprintf(bodyFmt, dummyMFAToken[:79], dummyPhoneOTP)
 
 		testAuthSecondFactorClientError(
-			t, app, dbs, body, 400, utils.ErrorBadRequest, nil, nil, &models.Log{
+			t, app, dbs, utils.AuthSecondFactor, body, 400, utils.ErrorBadRequest, nil, nil, &models.Log{
 				ClientIP:        clientIP,
 				ClientOperation: utils.AuthSecondFactor,
 				Detail:          dummyMFAToken[:79],
@@ -243,7 +262,7 @@ func testAuthSecondFactor(
 		body := fmt.Sprintf(`{"mfa_token":"%s","phoen_otp":"%s"}`, dummyMFAToken, dummyPhoneOTP)
 
 		testAuthSecondFactorClientError(
-			t, app, dbs, body, 400, utils.ErrorBadRequest, nil, nil, &models.Log{
+			t, app, dbs, utils.AuthSecondFactor, body, 400, utils.ErrorBadRequest, nil, nil, &models.Log{
 				ClientIP:        clientIP,
 				ClientOperation: utils.AuthSecondFactor,
 				Detail:          "",
@@ -258,7 +277,7 @@ func testAuthSecondFactor(
 		body := `{"mfa_token":"` + dummyMFAToken + `","phone_otp":null}`
 
 		testAuthSecondFactorClientError(
-			t, app, dbs, body, 400, utils.ErrorBadRequest, nil, nil, &models.Log{
+			t, app, dbs, utils.AuthSecondFactor, body, 400, utils.ErrorBadRequest, nil, nil, &models.Log{
 				ClientIP:        clientIP,
 				ClientOperation: utils.AuthSecondFactor,
 				Detail:          "",
@@ -273,7 +292,7 @@ func testAuthSecondFactor(
 		body := fmt.Sprintf(bodyFmt, dummyMFAToken, "")
 
 		testAuthSecondFactorClientError(
-			t, app, dbs, body, 400, utils.ErrorBadRequest, nil, nil, &models.Log{
+			t, app, dbs, utils.AuthSecondFactor, body, 400, utils.ErrorBadRequest, nil, nil, &models.Log{
 				ClientIP:        clientIP,
 				ClientOperation: utils.AuthSecondFactor,
 				Detail:          "",
@@ -288,7 +307,7 @@ func testAuthSecondFactor(
 		body := fmt.Sprintf(bodyFmt, dummyMFAToken, dummyPhoneOTP + "1")
 
 		testAuthSecondFactorClientError(
-			t, app, dbs, body, 400, utils.ErrorBadRequest, nil, nil, &models.Log{
+			t, app, dbs, utils.AuthSecondFactor, body, 400, utils.ErrorBadRequest, nil, nil, &models.Log{
 				ClientIP:        clientIP,
 				ClientOperation: utils.AuthSecondFactor,
 				Detail:          dummyPhoneOTP + "1",
@@ -303,7 +322,7 @@ func testAuthSecondFactor(
 		body := fmt.Sprintf(bodyFmt, dummyMFAToken, dummyPhoneOTP[:19])
 
 		testAuthSecondFactorClientError(
-			t, app, dbs, body, 400, utils.ErrorBadRequest, nil, nil, &models.Log{
+			t, app, dbs, utils.AuthSecondFactor, body, 400, utils.ErrorBadRequest, nil, nil, &models.Log{
 				ClientIP:        clientIP,
 				ClientOperation: utils.AuthSecondFactor,
 				Detail:          dummyPhoneOTP[:19],
@@ -319,10 +338,14 @@ func testAuthSecondFactor(
 		_, _, _, validMFATokens, _ := setup.SetUpApiGatewayWithData(t, dbs, conf)
 
 		body := fmt.Sprintf(bodyFmt, dummyMFAToken, validMFATokens[0].PhoneOTP)
-		testAuthSecondFactorClientError(t, app, dbs, body, 400, utils.ErrorAuthenticate, nil, nil, nil)
+		testAuthSecondFactorClientError(
+			t, app, dbs, utils.AuthSecondFactor, body, 400, utils.ErrorAuthenticate, nil, nil, nil,
+		)
 
 		body = fmt.Sprintf(bodyFmt, validMFATokens[0].MFAToken, dummyPhoneOTP)
-		testAuthSecondFactorClientError(t, app, dbs, body, 400, utils.ErrorAuthenticate, nil, nil, nil)
+		testAuthSecondFactorClientError(
+			t, app, dbs, utils.AuthSecondFactor, body, 400, utils.ErrorAuthenticate, nil, nil, nil,
+		)
 
 		var logCount int64
 		helpers.CountLogs(t, dbs.Logger, &logCount)
@@ -333,7 +356,9 @@ func testAuthSecondFactor(
 		_, _, _, _, expiredMFATokens := setup.SetUpApiGatewayWithData(t, dbs, conf)
 
 		body := fmt.Sprintf(bodyFmt, expiredMFATokens[1].MFAToken, expiredMFATokens[1].PhoneOTP)
-		testAuthSecondFactorClientError(t, app, dbs, body, 400, utils.ErrorAuthenticate, nil, nil, nil)
+		testAuthSecondFactorClientError(
+			t, app, dbs, utils.AuthSecondFactor, body, 400, utils.ErrorAuthenticate, nil, nil, nil,
+		)
 
 		var logCount int64
 		helpers.CountLogs(t, dbs.Logger, &logCount)
@@ -343,7 +368,7 @@ func testAuthSecondFactor(
 	t.Run("valid_body_200_ok", func(t *testing.T) {
 		_, _, _, validMFATokens, _ := setup.SetUpApiGatewayWithData(t, dbs, conf)
 		body := fmt.Sprintf(bodyFmt, validMFATokens[0].MFAToken, validMFATokens[0].PhoneOTP)
-		testAuthSecondFactorSuccess(t, app, dbs, body, conf.ADMIN_EMAIL)
+		testAuthSecondFactorSuccess(t, app, dbs, utils.AuthSecondFactor, body, conf.ADMIN_EMAIL)
 	})
 
 	t.Run("valid_body_irrelevant_data_200_ok", func(t *testing.T) {
@@ -352,16 +377,18 @@ func testAuthSecondFactor(
 			`{"mfa_token":"%s","phone_otp":"%s","abc":123}`,
 			validMFATokens[0].MFAToken, validMFATokens[0].PhoneOTP,
 		)
-		testAuthSecondFactorSuccess(t, app, dbs, validBodyIrrelevantData, conf.ADMIN_EMAIL)
+		testAuthSecondFactorSuccess(
+			t, app, dbs, utils.AuthSecondFactor, validBodyIrrelevantData, conf.ADMIN_EMAIL,
+		)
 	})
 }
 
 func testAuthSecondFactorClientError(
-	t *testing.T, app *fiber.App, dbs *databases.Databases, body string, expectedStatus int,
-	expectedDetail string, expectedFieldErrors map[string][]string, expectedNonFieldErrors []string,
-	expectedLog *models.Log,
+	t *testing.T, app *fiber.App, dbs *databases.Databases, clientOperation, body string,
+	expectedStatus int, expectedDetail string, expectedFieldErrors map[string][]string,
+	expectedNonFieldErrors []string, expectedLog *models.Log,
 ) {
-	resp := newRequestAuthSecondFactor(t, app, body)
+	resp := newRequestAuthSecondFactor(t, app, clientOperation, body)
 	require.Equal(t, expectedStatus, resp.StatusCode)
 
 	helpers.AssertErrorResponseBody(t, resp, &utils.ErrorResponseBody{
@@ -378,13 +405,13 @@ func testAuthSecondFactorClientError(
 }
 
 func testAuthSecondFactorSuccess(
-	t *testing.T, app *fiber.App, dbs *databases.Databases, body, email string,
+	t *testing.T, app *fiber.App, dbs *databases.Databases, clientOperation, body, email string,
 ) {
 	var sessionCount int64
 	helpers.CountClientSessions(t, dbs.ApiGateway, &sessionCount)
 	require.EqualValues(t, 4, sessionCount)
 
-	resp := newRequestAuthSecondFactor(t, app, body)
+	resp := newRequestAuthSecondFactor(t, app, clientOperation, body)
 	require.Equal(t, 200, resp.StatusCode)
 
 	helpers.CountClientSessions(t, dbs.ApiGateway, &sessionCount)
@@ -413,12 +440,14 @@ func testAuthSecondFactorSuccess(
 	}
 }
 
-func newRequestAuthSecondFactor(t *testing.T, app *fiber.App, body string) *http.Response {
+func newRequestAuthSecondFactor(
+	t *testing.T, app *fiber.App, clientOperation, body string,
+) *http.Response {
 	reqBody := strings.NewReader(body)
 	req := httptest.NewRequest("POST", "/api/auth/second_factor", reqBody)
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("X-Forwarded-For", helpers.CLIENT_IP)
-	req.Header.Set("Client-Operation", utils.AuthSecondFactor)
+	req.Header.Set("Client-Operation", clientOperation)
 
 	resp, err := app.Test(req, -1)
 

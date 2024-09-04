@@ -36,9 +36,24 @@ func testAuthFirstFactor(
 
 	setup.SetUpLogger(t, dbs)
 
+	t.Run("wrong_client_operation_header_400_bad_request", func(t *testing.T) {
+		body := fmt.Sprintf(bodyFmt, conf.ADMIN_EMAIL, helpers.VALID_PW)
+
+		testAuthFirstFactorClientError(
+			t, app, dbs, "wrong_operation", body, 400, utils.ErrorBadRequest, nil, nil, &models.Log{
+				ClientIP:        clientIP,
+				ClientOperation: utils.AuthFirstFactor,
+				Detail:          "wrong_operation",
+				Level:           "warn",
+				Message:         utils.ErrorClientOperation,
+				RequestBody:     body,
+			},
+		)
+	})
+
 	t.Run("empty_body_400_bad_request", func(t *testing.T) {
 		testAuthFirstFactorClientError(
-			t, app, dbs, "", 400, utils.ErrorBadRequest, nil, nil, &models.Log{
+			t, app, dbs, utils.AuthFirstFactor, "", 400, utils.ErrorBadRequest, nil, nil, &models.Log{
 				ClientIP:        clientIP,
 				ClientOperation: utils.AuthFirstFactor,
 				Detail:          "invalid character '\x00' looking for beginning of value",
@@ -51,7 +66,7 @@ func testAuthFirstFactor(
 
 	t.Run("array_body_400_bad_request", func(t *testing.T) {
 		testAuthFirstFactorClientError(
-			t, app, dbs, "[]", 400, utils.ErrorBadRequest, nil, nil, &models.Log{
+			t, app, dbs, utils.AuthFirstFactor, "[]", 400, utils.ErrorBadRequest, nil, nil, &models.Log{
 				ClientIP:        clientIP,
 				ClientOperation: utils.AuthFirstFactor,
 				Detail:          "invalid character '[' looking for beginning of value",
@@ -62,7 +77,7 @@ func testAuthFirstFactor(
 		)
 
 		testAuthFirstFactorClientError(
-			t, app, dbs, "[{}]", 400, utils.ErrorBadRequest, nil, nil, &models.Log{
+			t, app, dbs, utils.AuthFirstFactor, "[{}]", 400, utils.ErrorBadRequest, nil, nil, &models.Log{
 				ClientIP:        clientIP,
 				ClientOperation: utils.AuthFirstFactor,
 				Detail:          "invalid character '[' looking for beginning of value",
@@ -75,7 +90,7 @@ func testAuthFirstFactor(
 		body := `[` + fmt.Sprintf(bodyFmt, conf.ADMIN_EMAIL, helpers.VALID_PW) + `]`
 
 		testAuthFirstFactorClientError(
-			t, app, dbs, body, 400, utils.ErrorBadRequest, nil, nil, &models.Log{
+			t, app, dbs, utils.AuthFirstFactor, body, 400, utils.ErrorBadRequest, nil, nil, &models.Log{
 				ClientIP:        clientIP,
 				ClientOperation: utils.AuthFirstFactor,
 				Detail:          "invalid character '[' looking for beginning of value",
@@ -88,7 +103,8 @@ func testAuthFirstFactor(
 
 	t.Run("null_body_400_bad_request", func(t *testing.T) {
 		testAuthFirstFactorClientError(
-			t, app, dbs, "null", 400, utils.ErrorFailedLogin, nil, nil, &models.Log{
+			t, app, dbs, utils.AuthFirstFactor, "null", 400, utils.ErrorFailedLogin, nil, nil,
+			&models.Log{
 				ClientIP:        clientIP,
 				ClientOperation: utils.AuthFirstFactor,
 				Detail:          "",
@@ -101,7 +117,7 @@ func testAuthFirstFactor(
 
 	t.Run("boolean_body_400_bad_request", func(t *testing.T) {
 		testAuthFirstFactorClientError(
-			t, app, dbs, "true", 400, utils.ErrorBadRequest, nil, nil, &models.Log{
+			t, app, dbs, utils.AuthFirstFactor, "true", 400, utils.ErrorBadRequest, nil, nil, &models.Log{
 				ClientIP:        clientIP,
 				ClientOperation: utils.AuthFirstFactor,
 				Detail:          "invalid character 't' looking for beginning of value",
@@ -112,7 +128,8 @@ func testAuthFirstFactor(
 		)
 
 		testAuthFirstFactorClientError(
-			t, app, dbs, "false", 400, utils.ErrorBadRequest, nil, nil, &models.Log{
+			t, app, dbs, utils.AuthFirstFactor, "false", 400, utils.ErrorBadRequest, nil, nil,
+			&models.Log{
 				ClientIP:        clientIP,
 				ClientOperation: utils.AuthFirstFactor,
 				Detail:          "invalid character 'f' looking for beginning of value",
@@ -125,8 +142,8 @@ func testAuthFirstFactor(
 
 	t.Run("string_body_400_bad_request", func(t *testing.T) {
 		testAuthFirstFactorClientError(
-			t, app, dbs, `"Valid JSON, but not an object."`, 400, utils.ErrorBadRequest, nil, nil,
-			&models.Log{
+			t, app, dbs, utils.AuthFirstFactor, `"Valid JSON, but not an object."`, 400,
+			utils.ErrorBadRequest, nil, nil, &models.Log{
 				ClientIP:        clientIP,
 				ClientOperation: utils.AuthFirstFactor,
 				Detail:          `invalid character '"' looking for beginning of value`,
@@ -139,7 +156,7 @@ func testAuthFirstFactor(
 
 	t.Run("empty_object_body_400_bad_request", func(t *testing.T) {
 		testAuthFirstFactorClientError(
-			t, app, dbs, "{}", 400, utils.ErrorFailedLogin, nil, nil, &models.Log{
+			t, app, dbs, utils.AuthFirstFactor, "{}", 400, utils.ErrorFailedLogin, nil, nil, &models.Log{
 				ClientIP:        clientIP,
 				ClientOperation: utils.AuthFirstFactor,
 				Detail:          "",
@@ -154,7 +171,7 @@ func testAuthFirstFactor(
 		body := fmt.Sprintf(`{"emial":"%s","password":"%s"}`, conf.ADMIN_EMAIL, helpers.VALID_PW)
 
 		testAuthFirstFactorClientError(
-			t, app, dbs, body, 400, utils.ErrorFailedLogin, nil, nil, &models.Log{
+			t, app, dbs, utils.AuthFirstFactor, body, 400, utils.ErrorFailedLogin, nil, nil, &models.Log{
 				ClientIP:        clientIP,
 				ClientOperation: utils.AuthFirstFactor,
 				Detail:          "",
@@ -169,7 +186,7 @@ func testAuthFirstFactor(
 		body := `{"email":null,"password":"` + helpers.VALID_PW + `"}`
 
 		testAuthFirstFactorClientError(
-			t, app, dbs, body, 400, utils.ErrorFailedLogin, nil, nil, &models.Log{
+			t, app, dbs, utils.AuthFirstFactor, body, 400, utils.ErrorFailedLogin, nil, nil, &models.Log{
 				ClientIP:        clientIP,
 				ClientOperation: utils.AuthFirstFactor,
 				Detail:          "",
@@ -184,7 +201,7 @@ func testAuthFirstFactor(
 		body := fmt.Sprintf(bodyFmt, "", helpers.VALID_PW)
 
 		testAuthFirstFactorClientError(
-			t, app, dbs, body, 400, utils.ErrorFailedLogin, nil, nil, &models.Log{
+			t, app, dbs, utils.AuthFirstFactor, body, 400, utils.ErrorFailedLogin, nil, nil, &models.Log{
 				ClientIP:        clientIP,
 				ClientOperation: utils.AuthFirstFactor,
 				Detail:          "",
@@ -197,7 +214,9 @@ func testAuthFirstFactor(
 
 	t.Run("invalid_email_400_bad_request", func(t *testing.T) {
 		body := fmt.Sprintf(bodyFmt, "not-admin@test.com", helpers.VALID_PW)
-		testAuthFirstFactorClientError(t, app, dbs, body, 400, utils.ErrorFailedLogin, nil, nil, nil)
+		testAuthFirstFactorClientError(
+			t, app, dbs, utils.AuthFirstFactor, body, 400, utils.ErrorFailedLogin, nil, nil, nil,
+		)
 	})
 
 	t.Run("missing_password_400_bad_request", func(t *testing.T) {
@@ -206,7 +225,7 @@ func testAuthFirstFactor(
 		)
 
 		testAuthFirstFactorClientError(
-			t, app, dbs, body, 400, utils.ErrorFailedLogin, nil, nil, &models.Log{
+			t, app, dbs, utils.AuthFirstFactor, body, 400, utils.ErrorFailedLogin, nil, nil, &models.Log{
 				ClientIP:        clientIP,
 				ClientOperation: utils.AuthFirstFactor,
 				Detail:          "",
@@ -221,7 +240,7 @@ func testAuthFirstFactor(
 		body := `{"email":"` + conf.ADMIN_EMAIL + `","password":null}`
 
 		testAuthFirstFactorClientError(
-			t, app, dbs, body, 400, utils.ErrorFailedLogin, nil, nil, &models.Log{
+			t, app, dbs, utils.AuthFirstFactor, body, 400, utils.ErrorFailedLogin, nil, nil, &models.Log{
 				ClientIP:        clientIP,
 				ClientOperation: utils.AuthFirstFactor,
 				Detail:          "",
@@ -236,7 +255,7 @@ func testAuthFirstFactor(
 		body := fmt.Sprintf(bodyFmt, conf.ADMIN_EMAIL, "")
 
 		testAuthFirstFactorClientError(
-			t, app, dbs, body, 400, utils.ErrorFailedLogin, nil, nil, &models.Log{
+			t, app, dbs, utils.AuthFirstFactor, body, 400, utils.ErrorFailedLogin, nil, nil, &models.Log{
 				ClientIP:        clientIP,
 				ClientOperation: utils.AuthFirstFactor,
 				Detail:          "",
@@ -252,10 +271,14 @@ func testAuthFirstFactor(
 		setup.SetUpApiGatewayWithData(t, dbs, conf)
 
 		body := fmt.Sprintf(bodyFmt, conf.ADMIN_EMAIL, helpers.VALID_PW + "abc123")
-		testAuthFirstFactorClientError(t, app, dbs, body, 400, utils.ErrorFailedLogin, nil, nil, nil)
+		testAuthFirstFactorClientError(
+			t, app, dbs, utils.AuthFirstFactor, body, 400, utils.ErrorFailedLogin, nil, nil, nil,
+		)
 
 		body = fmt.Sprintf(bodyFmt, "not-admin@test.com", helpers.VALID_PW)
-		testAuthFirstFactorClientError(t, app, dbs, body, 400, utils.ErrorFailedLogin, nil, nil, nil)
+		testAuthFirstFactorClientError(
+			t, app, dbs, utils.AuthFirstFactor, body, 400, utils.ErrorFailedLogin, nil, nil, nil,
+		)
 
 		var logCount int64
 		helpers.CountLogs(t, dbs.Logger, &logCount)
@@ -264,23 +287,23 @@ func testAuthFirstFactor(
 
 	t.Run("valid_body_200_ok", func(t *testing.T) {
 		body := fmt.Sprintf(bodyFmt, conf.ADMIN_EMAIL, helpers.VALID_PW)
-		testAuthFirstFactorSuccess(t, app, dbs, body, conf)
+		testAuthFirstFactorSuccess(t, app, dbs, utils.AuthFirstFactor, body, conf)
 	})
 
 	t.Run("valid_body_irrelevant_data_200_ok", func(t *testing.T) {
 		validBodyIrrelevantData := fmt.Sprintf(
 			`{"email":"%s","password":"%s","abc":123}`, conf.ADMIN_EMAIL, helpers.VALID_PW,
 		)
-		testAuthFirstFactorSuccess(t, app, dbs, validBodyIrrelevantData, conf)
+		testAuthFirstFactorSuccess(t, app, dbs, utils.AuthFirstFactor, validBodyIrrelevantData, conf)
 	})
 }
 
 func testAuthFirstFactorClientError(
-	t *testing.T, app *fiber.App, dbs *databases.Databases, body string, expectedStatus int,
-	expectedDetail string, expectedFieldErrors map[string][]string, expectedNonFieldErrors []string,
-	expectedLog *models.Log,
+	t *testing.T, app *fiber.App, dbs *databases.Databases, clientOperation, body string,
+	expectedStatus int, expectedDetail string, expectedFieldErrors map[string][]string,
+	expectedNonFieldErrors []string, expectedLog *models.Log,
 ) {
-	resp := newRequestAuthFirstFactor(t, app, body)
+	resp := newRequestAuthFirstFactor(t, app, clientOperation, body)
 	require.Equal(t, expectedStatus, resp.StatusCode)
 
 	helpers.AssertErrorResponseBody(t, resp, &utils.ErrorResponseBody{
@@ -297,7 +320,8 @@ func testAuthFirstFactorClientError(
 }
 
 func testAuthFirstFactorSuccess(
-	t *testing.T, app *fiber.App, dbs *databases.Databases, body string, conf *config.AppConfig,
+	t *testing.T, app *fiber.App, dbs *databases.Databases, clientOperation, body string,
+	conf *config.AppConfig,
 ) {
 	setup.SetUpApiGatewayWithData(t, dbs, conf)
 
@@ -305,7 +329,7 @@ func testAuthFirstFactorSuccess(
 	helpers.CountMFATokens(t, dbs.ApiGateway, &mfaTokenCount)
 	require.EqualValues(t, 4, mfaTokenCount)
 
-	resp := newRequestAuthFirstFactor(t, app, body)
+	resp := newRequestAuthFirstFactor(t, app, clientOperation, body)
 	require.Equal(t, 200, resp.StatusCode)
 
 	helpers.CountMFATokens(t, dbs.ApiGateway, &mfaTokenCount)
@@ -329,12 +353,14 @@ func testAuthFirstFactorSuccess(
 	}
 }
 
-func newRequestAuthFirstFactor(t *testing.T, app *fiber.App, body string) *http.Response {
+func newRequestAuthFirstFactor(
+	t *testing.T, app *fiber.App, clientOperation, body string,
+) *http.Response {
 	reqBody := strings.NewReader(body)
 	req := httptest.NewRequest("POST", "/api/auth/first_factor", reqBody)
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("X-Forwarded-For", helpers.CLIENT_IP)
-	req.Header.Set("Client-Operation", utils.AuthFirstFactor)
+	req.Header.Set("Client-Operation", clientOperation)
 
 	resp, err := app.Test(req, -1)
 

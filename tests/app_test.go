@@ -58,4 +58,8 @@ func runTests(t *testing.T, app *fiber.App, dbs *databases.Databases, conf *conf
 	t.Run("test_retrieve_user", func(t *testing.T) {
 		testRetrieveUser(t, app, dbs, conf)
 	})
+
+	t.Run("test_client_operation_header", func(t *testing.T) {
+		testClientOperationHeader(t, app, dbs, conf)
+	})
 }

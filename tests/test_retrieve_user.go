@@ -21,6 +21,30 @@ import (
 func testRetrieveUser(
 	t *testing.T, app *fiber.App, dbs *databases.Databases, conf *config.AppConfig,
 ) {
+	var clientIP string
+
+	if conf.BEHIND_PROXY {
+		clientIP = helpers.CLIENT_IP
+	} else {
+		clientIP = "0.0.0.0"
+	}
+
+	t.Run("wrong_client_operation_header_400_bad_request", func(t *testing.T) {
+		setup.SetUpLogger(t, dbs)
+		_, validSessionTokens, _, _, _ := setup.SetUpApiGatewayWithData(t, dbs, conf)
+
+		testRetrieveUserClientError(
+			t, app, dbs, "wrong_operation", "Token " + validSessionTokens[0], 400, utils.ErrorBadRequest,
+			nil, nil, &models.Log{
+				ClientIP:        clientIP,
+				ClientOperation: utils.RetrieveUser,
+				Detail:          "wrong_operation",
+				Level:           "warn",
+				Message:         utils.ErrorClientOperation,
+			},
+		)
+	})
+
 	t.Run("valid_token_200_ok", func(t *testing.T) {
 		user, validSessionTokens, _, _, _ := setup.SetUpApiGatewayWithData(t, dbs, conf)
 
@@ -28,14 +52,40 @@ func testRetrieveUser(
 		helpers.CountClientSessions(t, dbs.ApiGateway, &sessionCount)
 		require.EqualValues(t, 4, sessionCount)
 
-		testRetrieveUserSuccess(t, app, user.Slug, user.Name, "Token " + validSessionTokens[0])
+		testRetrieveUserSuccess(
+			t, app, utils.RetrieveUser, user.Slug, user.Name, "Token " + validSessionTokens[0],
+		)
+
 		helpers.CountClientSessions(t, dbs.ApiGateway, &sessionCount)
 		require.EqualValues(t, 2, sessionCount)
 	})
 }
 
-func testRetrieveUserSuccess(t *testing.T, app *fiber.App, slug, name, authHeader string) {
-	resp := newRequestRetrieveUser(t, app, authHeader)
+func testRetrieveUserClientError(
+	t *testing.T, app *fiber.App, dbs *databases.Databases, clientOperation, authHeader string,
+	expectedStatus int, expectedDetail string, expectedFieldErrors map[string][]string,
+	expectedNonFieldErrors []string, expectedLog *models.Log,
+) {
+	resp := newRequestRetrieveUser(t, app, clientOperation, authHeader)
+	require.Equal(t, expectedStatus, resp.StatusCode)
+
+	helpers.AssertErrorResponseBody(t, resp, &utils.ErrorResponseBody{
+		Detail:         expectedDetail,
+		FieldErrors:    expectedFieldErrors,
+		NonFieldErrors: expectedNonFieldErrors,
+	})
+
+	if expectedLog != nil {
+		var actualLog models.Log
+		helpers.QueryTestLogLatest(t, dbs.Logger, &actualLog)
+		helpers.AssertLog(t, expectedLog, &actualLog)
+	}
+}
+
+func testRetrieveUserSuccess(
+	t *testing.T, app *fiber.App, clientOperation, slug, name, authHeader string,
+) {
+	resp := newRequestRetrieveUser(t, app, clientOperation, authHeader)
 	require.Equal(t, 200, resp.StatusCode)
 
 	if respBody, err := io.ReadAll(resp.Body); err != nil {
@@ -52,11 +102,13 @@ func testRetrieveUserSuccess(t *testing.T, app *fiber.App, slug, name, authHeade
 	}
 }
 
-func newRequestRetrieveUser(t *testing.T, app *fiber.App, authHeader string) *http.Response {
+func newRequestRetrieveUser(
+	t *testing.T, app *fiber.App, clientOperation, authHeader string,
+) *http.Response {
 	req := httptest.NewRequest("GET", "/api/users", nil)
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("X-Forwarded-For", helpers.CLIENT_IP)
-	req.Header.Set("Client-Operation", utils.RetrieveUser)
+	req.Header.Set("Client-Operation", clientOperation)
 	req.Header.Set("Authorization", authHeader)
 
 	resp, err := app.Test(req, -1)
