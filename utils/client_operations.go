@@ -18,6 +18,7 @@ const (
 	UpdateVault   string = "update_vault"
 	UpdateEntry   string = "update_entry"
 	UpdateSecret  string = "update_secret"
+	MoveSecret		string = "move_secret"
 	DeleteVault   string = "delete_vault"
 	DeleteEntry   string = "delete_entry"
 	DeleteSecret  string = "delete_secret"

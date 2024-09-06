@@ -21,6 +21,7 @@ const (
 	ErrorVaultsDeleteEntry		string = "Failed vaults API delete_entry."
 	ErrorVaultsCreateSecret		string = "Failed vaults API create_secret."
 	ErrorVaultsUpdateSecret		string = "Failed vaults API update_secret."
+	ErrorVaultsMoveSecret			string = "Failed vaults API move_secret."
 	ErrorVaultsDeleteSecret		string = "Failed vaults API delete_secret."
 	ErrorVaultsDeleteUser			string = "Failed vaults API delete_user."
 	ErrorFailedDB       			string = "Failed DB operation."

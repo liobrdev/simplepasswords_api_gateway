@@ -41,6 +41,6 @@ func Register(app *fiber.App, dbs *databases.Databases, conf *config.AppConfig) 
 
 	secretsApi := api.Group("/secrets")
 	secretsApi.Post("/", H.VaultsCreateSecret)
-	secretsApi.Patch("/:slug", H.VaultsUpdateSecret)
+	secretsApi.Patch("/:slug", H.VaultsUpdateSecret, H.VaultsMoveSecret)
 	secretsApi.Delete("/:slug", H.VaultsDeleteSecret)
 }

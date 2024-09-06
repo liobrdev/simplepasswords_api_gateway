@@ -6,22 +6,9 @@ import (
 	"github.com/liobrdev/simplepasswords_api_gateway/utils"
 )
 
-type UpdateSecretRequestBody struct {
-	Label		 	string `json:"secret_label"`
-	String	 	string `json:"secret_string"`
-	Priority 	string `json:"secret_priority"`
-	EntrySlug string `json:"entry_slug"`
-}
-
-func (H Handler) VaultsUpdateSecret(c *fiber.Ctx) error {
-	clientOperation := c.Get("Client-Operation")
-
-	if clientOperation == utils.MoveSecret {
-		return c.Next()
-	}
-
-	if clientOperation != utils.UpdateSecret {
-		H.logger(c, utils.UpdateSecret, clientOperation, "", "warn", utils.ErrorClientOperation)
+func (H Handler) VaultsMoveSecret(c *fiber.Ctx) error {
+	if clientOperation := c.Get("Client-Operation"); clientOperation != utils.MoveSecret {
+		H.logger(c, utils.MoveSecret, clientOperation, "", "warn", utils.ErrorClientOperation)
 
 		return utils.RespondWithError(c, 400, utils.ErrorBadRequest, nil, nil)
 	}
@@ -29,7 +16,7 @@ func (H Handler) VaultsUpdateSecret(c *fiber.Ctx) error {
 	reqBody := UpdateSecretRequestBody{}
 
 	if err := c.BodyParser(&reqBody); err != nil {
-		H.logger(c, utils.UpdateSecret, err.Error(), "", "error", utils.ErrorParse)
+		H.logger(c, utils.MoveSecret, err.Error(), "", "error", utils.ErrorParse)
 
 		return utils.RespondWithError(c, 400, utils.ErrorBadRequest, nil, nil)
 	}
@@ -41,13 +28,13 @@ func (H Handler) VaultsUpdateSecret(c *fiber.Ctx) error {
 	)
 
 	agent.Set("Authorization", "Token " + H.Conf.VAULTS_ACCESS_TOKEN)
-	agent.Set("Client-Operation", utils.UpdateSecret)
+	agent.Set("Client-Operation", utils.MoveSecret)
 	agent.JSON(&reqBody)
 
 	_, _, errString := checkVaultsResponse(agent)
 
 	if errString != "" {
-		H.logger(c, utils.UpdateSecret, errString, "", "error", utils.ErrorVaultsUpdateSecret)
+		H.logger(c, utils.MoveSecret, errString, "", "error", utils.ErrorVaultsMoveSecret)
 
 		return utils.RespondWithError(c, 500, utils.ErrorServer, nil, nil)
 	}
