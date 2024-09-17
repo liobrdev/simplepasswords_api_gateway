@@ -6,9 +6,7 @@ import (
 	"io"
 	"math/big"
 
-	"golang.org/x/crypto/bcrypt"
-
-	"github.com/liobrdev/simplepasswords_api_gateway/config"
+	"golang.org/x/crypto/argon2"
 )
 
 var lettersSize = big.NewInt(int64(len(UPPERCASE_LETTERS)))
@@ -113,26 +111,24 @@ func GenerateOTP() ([]string, error) {
 	return blocks, nil
 }
 
-func GenerateSalt(n int) (string, error) {
-	byte_salt := make([]byte, n)
+func GenerateSalt(n int) (salt []byte, err error) {
+	salt = make([]byte, n)
 
 	for i := 0; i < n; i++ {
 		if num, err := rand.Int(rand.Reader, passwordAlphabetSize); err != nil {
-			return "", err
+			return nil, err
 		} else {
-			byte_salt[i] = PASSWORD_ALPHABET[num.Int64()]
+			salt[i] = PASSWORD_ALPHABET[num.Int64()]
 		}
 	}
 
-	return string(byte_salt), nil
+	return salt, nil
 }
 
-func GenerateUserCredentials(password string, conf *config.AppConfig) ([]byte, error) {
-	if hash, err := bcrypt.GenerateFromPassword(
-		[]byte(conf.ADMIN_SALT_1 + password + conf.ADMIN_SALT_2), bcrypt.DefaultCost,
-	); err != nil {
-		return nil, err
-	} else {
-		return hash, nil
+func GenerateUserCredentials(password []byte) (hash, salt []byte, err error) {
+	if salt, err = GenerateSalt(16); err != nil {
+		return nil, nil, err
 	}
+
+	return argon2.IDKey(password, salt, 1, 64 * 1024, 4, 64), salt, nil
 }

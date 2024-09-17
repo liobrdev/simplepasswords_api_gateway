@@ -9,8 +9,6 @@ import (
 type UpdateSecretRequestBody struct {
 	Label		 	string `json:"secret_label"`
 	String	 	string `json:"secret_string"`
-	Priority 	string `json:"secret_priority"`
-	EntrySlug string `json:"entry_slug"`
 }
 
 func (H Handler) VaultsUpdateSecret(c *fiber.Ctx) error {
@@ -42,6 +40,7 @@ func (H Handler) VaultsUpdateSecret(c *fiber.Ctx) error {
 
 	agent.Set("Authorization", "Token " + H.Conf.VAULTS_ACCESS_TOKEN)
 	agent.Set("Client-Operation", utils.UpdateSecret)
+	agent.Set(H.Conf.PASSWORD_HEADER_KEY, c.Get(H.Conf.PASSWORD_HEADER_KEY)[:64])
 	agent.JSON(&reqBody)
 
 	_, _, errString := checkVaultsResponse(agent)

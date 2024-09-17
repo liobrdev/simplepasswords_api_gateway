@@ -20,6 +20,7 @@ func TestApp(t *testing.T) {
 	}
 
 	t.Run("is_behind_proxy", func(t *testing.T) {
+		conf.ENVIRONMENT = "testing"
 		conf.GO_TESTING_CONTEXT = t
 		conf.BEHIND_PROXY = true
 		app := app.CreateApp(&conf)
@@ -29,6 +30,7 @@ func TestApp(t *testing.T) {
 	})
 
 	t.Run("is_not_behind_proxy", func(t *testing.T) {
+		conf.ENVIRONMENT = "testing"
 		conf.GO_TESTING_CONTEXT = t
 		conf.BEHIND_PROXY = false
 		app := app.CreateApp(&conf)

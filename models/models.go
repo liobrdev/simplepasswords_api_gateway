@@ -5,6 +5,7 @@ import "time"
 type User struct {
 	Slug            string    `json:"user_slug" gorm:"primaryKey;not null"`
 	PasswordHash    []byte    `json:"-" gorm:"not null"`
+	PasswordSalt    []byte    `json:"-" gorm:"not null"`
 	Name            string    `json:"name" gorm:"not null"`
 	EmailAddress    string    `json:"email_address,omitempty" gorm:"unique;not null"`
 	PhoneNumber     string    `json:"phone_number,omitempty" gorm:"unique;not null"`

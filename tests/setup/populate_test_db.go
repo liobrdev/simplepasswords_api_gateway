@@ -14,7 +14,7 @@ func populateTestDBApiGateway(t *testing.T, dbs *databases.Databases, conf *conf
 	validSessionTokens, expiredSessionTokens []string,
 	validMFATokens, expiredMFATokens []controllers.AuthSecondFactorRequestBody,
 ) {
-	user = createTestUser(t, dbs, conf)
+	user = createTestUser(t, dbs)
 	validSessionTokens = createValidTestClientSessions(&user, t, dbs, conf)
 	expiredSessionTokens = createExpiredTestClientSessions(&user, t, dbs, conf)
 	validMFATokens = createValidTestMFATokens(&user, t, dbs)

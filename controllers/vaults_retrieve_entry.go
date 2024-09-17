@@ -22,6 +22,7 @@ func (H Handler) VaultsRetrieveEntry(c *fiber.Ctx) error {
 	agent.Set("Authorization", "Token " + H.Conf.VAULTS_ACCESS_TOKEN)
 	agent.Set("Client-Operation", utils.RetrieveEntry)
 	agent.Set("Content-Type", "application/json")
+	agent.Set(H.Conf.PASSWORD_HEADER_KEY, c.Get(H.Conf.PASSWORD_HEADER_KEY)[:64])
 
 	_, body, errString := checkVaultsResponse(agent)
 

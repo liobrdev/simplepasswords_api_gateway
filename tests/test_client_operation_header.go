@@ -28,7 +28,7 @@ func testClientOperationHeader(
 	}
 
 	dummySlug := helpers.NewSlug(t)
-
+	
 	clientOperations := map[string][]string{
 		"create_vault":		{"POST", "/api/vaults"},
 		"list_vaults":		{"GET", "/api/vaults"},
@@ -50,7 +50,7 @@ func testClientOperationHeader(
 	for operation, route := range clientOperations {
 		t.Run("wrong_client_operation_" + operation + "_400_bad_request", func(t *testing.T) {
 			testClientOperationHeaderError(
-				t, app, dbs, route[0], route[1], "Token " + validSessionTokens[0], "wrong_operation",
+				t, app, dbs, conf, route[0], route[1], "Token " + validSessionTokens[0], "wrong_operation",
 				400, utils.ErrorBadRequest, nil, nil, &models.Log{
 					ClientIP:        clientIP,
 					ClientOperation: operation,
@@ -64,12 +64,12 @@ func testClientOperationHeader(
 }
 
 func testClientOperationHeaderError(
-	t *testing.T, app *fiber.App, dbs *databases.Databases,
+	t *testing.T, app *fiber.App, dbs *databases.Databases, conf *config.AppConfig,
 	method, target, authHeader, clientOperation string,
 	expectedStatus int, expectedDetail string, expectedFieldErrors map[string][]string,
 	expectedNonFieldErrors []string, expectedLog *models.Log,
 ) {
-	resp := newRequestGeneric(t, app, method, target, authHeader, clientOperation)
+	resp := newRequestGeneric(t, app, conf, method, target, authHeader, clientOperation)
 	require.Equal(t, expectedStatus, resp.StatusCode)
 
 	helpers.AssertErrorResponseBody(t, resp, &utils.ErrorResponseBody{
@@ -86,13 +86,15 @@ func testClientOperationHeaderError(
 }
 
 func newRequestGeneric(
-	t *testing.T, app *fiber.App, method, target, authHeader, clientOperation string,
+	t *testing.T, app *fiber.App, conf *config.AppConfig,
+	method, target, authHeader, clientOperation string,
 ) *http.Response {
 	req := httptest.NewRequest(method, target, nil)
 	req.Header.Set("Authorization", authHeader)
 	req.Header.Set("Client-Operation", clientOperation)
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("X-Forwarded-For", helpers.CLIENT_IP)
+	req.Header.Set(conf.PASSWORD_HEADER_KEY, helpers.HexHash1)
 
 	resp, err := app.Test(req, -1)
 

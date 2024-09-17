@@ -12,11 +12,6 @@ import (
 )
 
 type AppConfig struct {
-	ADMIN_EMAIL							string
-	ADMIN_NAME							string
-	ADMIN_PHONE							string
-	ADMIN_SALT_1						string
-	ADMIN_SALT_2						string
 	API_GATEWAY_DB_HOST			string
 	API_GATEWAY_DB_NAME			string
 	API_GATEWAY_DB_PASSWORD	string
@@ -31,6 +26,7 @@ type AppConfig struct {
 	LOGGER_DB_PASSWORD			string
 	LOGGER_DB_PORT					string
 	LOGGER_DB_USER					string
+	PASSWORD_HEADER_KEY			string
 	PROXY_IP_ADDRESSES			[]string
 	REDIS_PASSWORD					string
 	SECRET_KEY							string
@@ -44,11 +40,6 @@ type AppConfig struct {
 }
 
 type envAbsPaths struct {
-	ADMIN_EMAIL							string
-	ADMIN_NAME							string
-	ADMIN_PHONE							string
-	ADMIN_SALT_1						string
-	ADMIN_SALT_2						string
 	API_GATEWAY_DB_HOST			string
 	API_GATEWAY_DB_NAME			string
 	API_GATEWAY_DB_PASSWORD	string
@@ -63,6 +54,7 @@ type envAbsPaths struct {
 	LOGGER_DB_PASSWORD			string
 	LOGGER_DB_PORT					string
 	LOGGER_DB_USER					string
+	PASSWORD_HEADER_KEY			string
 	PROXY_IP_ADDRESSES			string
 	REDIS_PASSWORD					string
 	SECRET_KEY							string

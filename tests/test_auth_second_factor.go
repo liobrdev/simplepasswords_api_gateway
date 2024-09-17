@@ -368,7 +368,7 @@ func testAuthSecondFactor(
 	t.Run("valid_body_200_ok", func(t *testing.T) {
 		_, _, _, validMFATokens, _ := setup.SetUpApiGatewayWithData(t, dbs, conf)
 		body := fmt.Sprintf(bodyFmt, validMFATokens[0].MFAToken, validMFATokens[0].PhoneOTP)
-		testAuthSecondFactorSuccess(t, app, dbs, utils.AuthSecondFactor, body, conf.ADMIN_EMAIL)
+		testAuthSecondFactorSuccess(t, app, dbs, utils.AuthSecondFactor, body, helpers.VALID_EMAIL_1)
 	})
 
 	t.Run("valid_body_irrelevant_data_200_ok", func(t *testing.T) {
@@ -378,7 +378,7 @@ func testAuthSecondFactor(
 			validMFATokens[0].MFAToken, validMFATokens[0].PhoneOTP,
 		)
 		testAuthSecondFactorSuccess(
-			t, app, dbs, utils.AuthSecondFactor, validBodyIrrelevantData, conf.ADMIN_EMAIL,
+			t, app, dbs, utils.AuthSecondFactor, validBodyIrrelevantData, helpers.VALID_EMAIL_1,
 		)
 	})
 }

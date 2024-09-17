@@ -3,6 +3,7 @@ package controllers
 import (
 	"bytes"
 	"context"
+	"encoding/hex"
 	"strconv"
 	"time"
 
@@ -13,6 +14,19 @@ import (
 )
 
 type userContextKey struct{}
+
+var privilegedOps = []string{
+	utils.CreateVault,
+	utils.CreateEntry,
+	utils.CreateSecret,
+	utils.RetrieveEntry,
+	utils.UpdateVault,
+	utils.UpdateEntry,
+	utils.UpdateSecret,
+	utils.DeleteVault,
+	utils.DeleteEntry,
+	utils.DeleteSecret,
+}
 
 func (H Handler) AuthorizeRequest(c *fiber.Ctx) error {
 	authHeader := c.Get("Authorization")
@@ -91,7 +105,7 @@ func (H Handler) AuthorizeRequest(c *fiber.Ctx) error {
 
 	thisSessionExpired := false
 	now := time.Now().UTC()
-	
+
 	// Clean up expired sessions
 	for _, session := range userAllSessions {
 		if session.ExpiresAt.Before(now) {
@@ -134,8 +148,26 @@ func (H Handler) AuthorizeRequest(c *fiber.Ctx) error {
 			c, c.Get("Client-Operation"), "utils.HashToken(authToken) != thisSession.Digest",
 			"authToken = " + authToken, "error", utils.ErrorToken,
 		)
-	
+
 		return utils.RespondWithError(c, 401, utils.ErrorToken, nil, nil)
+	}
+
+	clientOperation := c.Get("Client-Operation")
+
+	for _, privilegedOp := range privilegedOps {
+		if clientOperation == privilegedOp {
+			if password, err := hex.DecodeString(c.Get(H.Conf.PASSWORD_HEADER_KEY)); err != nil {
+				H.logger(c, utils.CreateAccount, err.Error(), "", "error", "Failed decode password")
+
+				return utils.RespondWithError(c, 400, utils.ErrorBadRequest, nil, nil)
+			} else if !utils.CompareHashAndPassword(
+				thisSession.User.PasswordHash, password, thisSession.User.PasswordSalt,
+			) {
+				return utils.RespondWithError(c, 401, utils.ErrorAcctPW, nil, nil)
+			}
+
+			break
+		}
 	}
 
 	c.SetUserContext(context.WithValue(context.Background(), userContextKey{}, &thisSession.User))

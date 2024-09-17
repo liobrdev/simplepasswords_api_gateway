@@ -32,14 +32,13 @@ func testCreateAccount(
 		clientIP = "0.0.0.0"
 	}
 
-	bodyFmt := `{"name":"%s","email":"%s","phone":"%s","password":"%s","password_2":"%s"}`
-
+	bodyFmt := `{"name":"%s","email":"%s","phone":"%s","password":"%s"}`
+	
 	setup.SetUpLogger(t, dbs)
 
 	t.Run("wrong_client_operation_header_400_bad_request", func(t *testing.T) {
 		body := fmt.Sprintf(
-			bodyFmt,
-			conf.ADMIN_NAME, conf.ADMIN_EMAIL, conf.ADMIN_PHONE, helpers.VALID_PW, helpers.VALID_PW,
+			bodyFmt, helpers.VALID_NAME_2, helpers.VALID_EMAIL_2, helpers.VALID_PHONE_2, helpers.HexHash2,
 		)
 
 		testCreateAccountClientError(
@@ -91,8 +90,7 @@ func testCreateAccount(
 		)
 
 		body := `[` + fmt.Sprintf(
-			bodyFmt,
-			conf.ADMIN_NAME, conf.ADMIN_EMAIL, conf.ADMIN_PHONE, helpers.VALID_PW, helpers.VALID_PW,
+			bodyFmt, helpers.VALID_NAME_2, helpers.VALID_EMAIL_2, helpers.VALID_PHONE_2, helpers.HexHash2,
 		) + `]`
 
 		testCreateAccountClientError(
@@ -174,22 +172,25 @@ func testCreateAccount(
 	t.Run("invalid_name_400_bad_request", func(t *testing.T) {
 		setup.SetUpLogger(t, dbs)
 		body := fmt.Sprintf(
-			bodyFmt, "NotAdmin", conf.ADMIN_EMAIL, conf.ADMIN_PHONE, helpers.VALID_PW, helpers.VALID_PW,
+			bodyFmt, "@()^!~", helpers.VALID_EMAIL_2, helpers.VALID_PHONE_2, helpers.HexHash2,
 		)
 
 		testCreateAccountClientError(
-			t, app, dbs, utils.CreateAccount, body, 400, utils.ErrorBadRequest, nil, nil, nil,
+			t, app, dbs, utils.CreateAccount, body, 400, utils.ErrorBadRequest, nil, nil, &models.Log{
+				ClientIP:        clientIP,
+				ClientOperation: utils.CreateAccount,
+				Detail:          "@()^!~",
+				Level:           "warn",
+				Message:         utils.ErrorAcctName,
+				RequestBody:     body,
+			},
 		)
-
-		var logCount int64
-		helpers.CountLogs(t, dbs.Logger, &logCount)
-		require.EqualValues(t, 0, logCount)
 	})
 
 	t.Run("missing_name_400_bad_request", func(t *testing.T) {
 		body := fmt.Sprintf(
-			`{"nmae":"%s","email":"%s","phone":"%s","password":"%s","password_2":"%s"}`,
-			conf.ADMIN_NAME, conf.ADMIN_EMAIL, conf.ADMIN_PHONE, helpers.VALID_PW, helpers.VALID_PW,
+			`{"nmae":"%s","email":"%s","phone":"%s","password":"%s"}`,
+			helpers.VALID_NAME_2, helpers.VALID_EMAIL_2, helpers.VALID_PHONE_2, helpers.HexHash2,
 		)
 
 		testCreateAccountClientError(
@@ -206,8 +207,8 @@ func testCreateAccount(
 
 	t.Run("null_name_400_bad_request", func(t *testing.T) {
 		body := fmt.Sprintf(
-			`{"name":null,"email":"%s","phone":"%s","password":"%s","password_2":"%s"}`,
-			conf.ADMIN_EMAIL, conf.ADMIN_PHONE, helpers.VALID_PW, helpers.VALID_PW,
+			`{"name":null,"email":"%s","phone":"%s","password":"%s"}`,
+			helpers.VALID_EMAIL_2, helpers.VALID_PHONE_2, helpers.HexHash2,
 		)
 
 		testCreateAccountClientError(
@@ -223,9 +224,7 @@ func testCreateAccount(
 	})
 
 	t.Run("empty_name_400_bad_request", func(t *testing.T) {
-		body := fmt.Sprintf(
-			bodyFmt, "", conf.ADMIN_EMAIL, conf.ADMIN_PHONE, helpers.VALID_PW, helpers.VALID_PW,
-		)
+		body := fmt.Sprintf(bodyFmt, "", helpers.VALID_EMAIL_2, helpers.VALID_PHONE_2, helpers.HexHash2)
 
 		testCreateAccountClientError(
 			t, app, dbs, utils.CreateAccount, body, 400, utils.ErrorBadRequest, nil, nil, &models.Log{
@@ -239,10 +238,28 @@ func testCreateAccount(
 		)
 	})
 
+	t.Run("invalid_email_400_bad_request", func(t *testing.T) {
+		setup.SetUpLogger(t, dbs)
+		body := fmt.Sprintf(
+			bodyFmt, helpers.VALID_NAME_2, "!$@&^&.o", helpers.VALID_PHONE_2, helpers.HexHash2,
+		)
+
+		testCreateAccountClientError(
+			t, app, dbs, utils.CreateAccount, body, 400, utils.ErrorBadRequest, nil, nil, &models.Log{
+				ClientIP:        clientIP,
+				ClientOperation: utils.CreateAccount,
+				Detail:          "!$@&^&.o",
+				Level:           "warn",
+				Message:         utils.ErrorAcctEmail,
+				RequestBody:     body,
+			},
+		)
+	})
+
 	t.Run("missing_email_400_bad_request", func(t *testing.T) {
 		body := fmt.Sprintf(
-			`{"name":"%s","emial":"%s","phone":"%s","password":"%s","password_2":"%s"}`,
-			conf.ADMIN_NAME, conf.ADMIN_EMAIL, conf.ADMIN_PHONE, helpers.VALID_PW, helpers.VALID_PW,
+			`{"name":"%s","emial":"%s","phone":"%s","password":"%s"}`,
+			helpers.VALID_NAME_2, helpers.VALID_EMAIL_2, helpers.VALID_PHONE_2, helpers.HexHash2,
 		)
 
 		testCreateAccountClientError(
@@ -259,8 +276,8 @@ func testCreateAccount(
 
 	t.Run("null_email_400_bad_request", func(t *testing.T) {
 		body := fmt.Sprintf(
-			`{"name":"%s","email":null,"phone":"%s","password":"%s","password_2":"%s"}`,
-			conf.ADMIN_NAME, conf.ADMIN_PHONE, helpers.VALID_PW, helpers.VALID_PW,
+			`{"name":"%s","email":null,"phone":"%s","password":"%s"}`,
+			helpers.VALID_NAME_2, helpers.VALID_PHONE_2, helpers.HexHash2,
 		)
 
 		testCreateAccountClientError(
@@ -276,9 +293,7 @@ func testCreateAccount(
 	})
 
 	t.Run("empty_email_400_bad_request", func(t *testing.T) {
-		body := fmt.Sprintf(
-			bodyFmt, conf.ADMIN_NAME, "", conf.ADMIN_PHONE, helpers.VALID_PW, helpers.VALID_PW,
-		)
+		body := fmt.Sprintf(bodyFmt, helpers.VALID_NAME_2, "", helpers.VALID_PHONE_2, helpers.HexHash2)
 
 		testCreateAccountClientError(
 			t, app, dbs, utils.CreateAccount, body, 400, utils.ErrorBadRequest, nil, nil, &models.Log{
@@ -292,23 +307,111 @@ func testCreateAccount(
 		)
 	})
 
-	t.Run("invalid_email_400_bad_request", func(t *testing.T) {
+	t.Run("invalid_phone_400_bad_request", func(t *testing.T) {
 		setup.SetUpLogger(t, dbs)
+		body := fmt.Sprintf(bodyFmt, helpers.VALID_NAME_2, helpers.VALID_EMAIL_2, "123", helpers.HexHash2)
 
+		testCreateAccountClientError(
+			t, app, dbs, utils.CreateAccount, body, 400, utils.ErrorBadRequest, nil, nil, &models.Log{
+				ClientIP:        clientIP,
+				ClientOperation: utils.CreateAccount,
+				Detail:          "123",
+				Level:           "warn",
+				Message:         utils.ErrorAcctPhone,
+				RequestBody:     body,
+			},
+		)
+	})
+
+	t.Run("missing_phone_400_bad_request", func(t *testing.T) {
 		body := fmt.Sprintf(
-			bodyFmt,
-			conf.ADMIN_NAME, "wrong@test.com", conf.ADMIN_PHONE, helpers.VALID_PW, helpers.VALID_PW,
+			`{"name":"%s","email":"%s","phnoe":"%s","password":"%s"}`,
+			helpers.VALID_NAME_2, helpers.VALID_EMAIL_2, helpers.VALID_PHONE_2, helpers.HexHash2,
 		)
 
 		testCreateAccountClientError(
-			t, app, dbs, utils.CreateAccount, body, 400, utils.ErrorBadRequest, nil, nil, nil,
+			t, app, dbs, utils.CreateAccount, body, 400, utils.ErrorBadRequest, nil, nil, &models.Log{
+				ClientIP:        clientIP,
+				ClientOperation: utils.CreateAccount,
+				Detail:          "",
+				Level:           "warn",
+				Message:         utils.ErrorAcctPhone,
+				RequestBody:     body,
+			},
+		)
+	})
+
+	t.Run("null_phone_400_bad_request", func(t *testing.T) {
+		body := fmt.Sprintf(
+			`{"name":"%s","email":"%s","phone":null,"password":"%s"}`,
+			helpers.VALID_NAME_2, helpers.VALID_EMAIL_2, helpers.HexHash2,
+		)
+
+		testCreateAccountClientError(
+			t, app, dbs, utils.CreateAccount, body, 400, utils.ErrorBadRequest, nil, nil, &models.Log{
+				ClientIP:        clientIP,
+				ClientOperation: utils.CreateAccount,
+				Detail:          "",
+				Level:           "warn",
+				Message:         utils.ErrorAcctPhone,
+				RequestBody:     body,
+			},
+		)
+	})
+
+	t.Run("empty_phone_400_bad_request", func(t *testing.T) {
+		body := fmt.Sprintf(bodyFmt, helpers.VALID_NAME_2, helpers.VALID_EMAIL_2, "", helpers.HexHash2)
+
+		testCreateAccountClientError(
+			t, app, dbs, utils.CreateAccount, body, 400, utils.ErrorBadRequest, nil, nil, &models.Log{
+				ClientIP:        clientIP,
+				ClientOperation: utils.CreateAccount,
+				Detail:          "",
+				Level:           "warn",
+				Message:         utils.ErrorAcctPhone,
+				RequestBody:     body,
+			},
+		)
+	})
+
+	t.Run("invalid_password_400_bad_request", func(t *testing.T) {
+		body := fmt.Sprintf(
+			bodyFmt,
+			helpers.VALID_NAME_2, helpers.VALID_EMAIL_2, helpers.VALID_PHONE_2, "0123456789abcdeg",
+		)
+
+		testCreateAccountClientError(
+			t, app, dbs, utils.CreateAccount, body, 400, utils.ErrorBadRequest, nil, nil, &models.Log{
+				ClientIP:        clientIP,
+				ClientOperation: utils.CreateAccount,
+				Detail:          "encoding/hex: invalid byte: U+0067 'g'",
+				Level:           "error",
+				Message:         "Failed decode password",
+				RequestBody:     body,
+			},
+		)
+
+		body = fmt.Sprintf(
+			bodyFmt,
+			helpers.VALID_NAME_2, helpers.VALID_EMAIL_2, helpers.VALID_PHONE_2, "0123456789abcde",
+		)
+
+		testCreateAccountClientError(
+			t, app, dbs, utils.CreateAccount, body, 400, utils.ErrorBadRequest, nil, nil, &models.Log{
+				ClientIP:        clientIP,
+				ClientOperation: utils.CreateAccount,
+				Detail:          "encoding/hex: odd length hex string",
+				Level:           "error",
+				Message:         "Failed decode password",
+				RequestBody:     body,
+			},
 		)
 	})
 
 	t.Run("missing_password_400_bad_request", func(t *testing.T) {
 		body := fmt.Sprintf(
-			`{"name":"%s","email":"%s","phone":"%s","passwrod":"%s","password_2":"%s"}`,
-			conf.ADMIN_NAME, conf.ADMIN_EMAIL, conf.ADMIN_PHONE, helpers.VALID_PW, helpers.VALID_PW,
+			`{"name":"%s","email":"%s","phone":"%s","passwrod":"%s"}`,
+			helpers.VALID_NAME_2, helpers.VALID_EMAIL_2, helpers.VALID_PHONE_2, helpers.HexHash2,
 		)
 
 		testCreateAccountClientError(
@@ -323,10 +426,10 @@ func testCreateAccount(
 		)
 	})
 
-	t.Run("unmatching_passwords_400_bad_request", func(t *testing.T) {
+	t.Run("null_password_400_bad_request", func(t *testing.T) {
 		body := fmt.Sprintf(
-			bodyFmt, conf.ADMIN_NAME, conf.ADMIN_EMAIL, conf.ADMIN_PHONE, helpers.VALID_PW,
-			"N0nmatchpa$sw0rd",
+			`{"name":"%s","email":"%s","phone":"%s","password":null}`,
+			helpers.VALID_NAME_2, helpers.VALID_EMAIL_2, helpers.VALID_PHONE_2,
 		)
 
 		testCreateAccountClientError(
@@ -335,23 +438,22 @@ func testCreateAccount(
 				ClientOperation: utils.CreateAccount,
 				Detail:          "",
 				Level:           "warn",
-				Message:         utils.ErrorNonMatchPW,
+				Message:         utils.ErrorAcctPW,
 				RequestBody:     body,
 			},
 		)
 	})
 
-	t.Run("password_is_email_400_bad_request", func(t *testing.T) {
+	t.Run("empty_password_400_bad_request", func(t *testing.T) {
 		body := fmt.Sprintf(
-			bodyFmt, conf.ADMIN_NAME, conf.ADMIN_EMAIL, conf.ADMIN_PHONE, conf.ADMIN_EMAIL,
-			conf.ADMIN_EMAIL,
+			bodyFmt, helpers.VALID_NAME_2, helpers.VALID_EMAIL_2, helpers.VALID_PHONE_2, "",
 		)
 
 		testCreateAccountClientError(
 			t, app, dbs, utils.CreateAccount, body, 400, utils.ErrorBadRequest, nil, nil, &models.Log{
 				ClientIP:        clientIP,
 				ClientOperation: utils.CreateAccount,
-				Detail:          "Password is email",
+				Detail:          "",
 				Level:           "warn",
 				Message:         utils.ErrorAcctPW,
 				RequestBody:     body,
@@ -359,128 +461,12 @@ func testCreateAccount(
 		)
 	})
 
-	t.Run("too_long_password_400_bad_request", func(t *testing.T) {
-		setup.SetUpLogger(t, dbs)
-		pwLength := 72 - len(conf.ADMIN_SALT_1) - len(conf.ADMIN_SALT_2)
-
-		if slug, err := utils.GenerateSlug(pwLength - 3); err != nil {
-			t.Fatalf("Generate long password failed: %s", err.Error())
-		} else {
-			pw := slug + "qQ1!"
-			body := fmt.Sprintf(bodyFmt, conf.ADMIN_NAME, conf.ADMIN_EMAIL, conf.ADMIN_PHONE, pw, pw)
-			testCreateAccountClientError(
-				t, app, dbs, utils.CreateAccount, body, 400, utils.ErrorBadRequest, nil, nil, nil,
-			)
-		}
-	
-		var logCount int64
-		helpers.CountLogs(t, dbs.Logger, &logCount)
-		require.EqualValues(t, 0, logCount)
-	})
-
-	t.Run("too_short_password_400_bad_request", func(t *testing.T) {
-		if slug, err := utils.GenerateSlug(11); err != nil {
-			t.Fatalf("Generate short password failed: %s", err.Error())
-		} else {
-			pw := slug + "qQ1!"
-			body := fmt.Sprintf(bodyFmt, conf.ADMIN_NAME, conf.ADMIN_EMAIL, conf.ADMIN_PHONE, pw, pw)
-			testCreateAccountClientError(
-				t, app, dbs, utils.CreateAccount, body, 400, utils.ErrorBadRequest, nil, nil, nil,
-			)
-		}
-
-		var logCount int64
-		helpers.CountLogs(t, dbs.Logger, &logCount)
-		require.EqualValues(t, 0, logCount)
-	})
-
-	t.Run("password_missing_uppercase_400_bad_request", func(t *testing.T) {
-		pw := "n0uppercasepa$sw0rd"
-		body := fmt.Sprintf(bodyFmt, conf.ADMIN_NAME, conf.ADMIN_EMAIL, conf.ADMIN_PHONE, pw, pw)
-
-		testCreateAccountClientError(
-			t, app, dbs, utils.CreateAccount, body, 400, utils.ErrorBadRequest, nil, nil, &models.Log{
-				ClientIP:        clientIP,
-				ClientOperation: utils.CreateAccount,
-				Detail:          "Missing uppercase",
-				Level:           "warn",
-				Message:         utils.ErrorAcctPW,
-				RequestBody:     body,
-			},
-		)
-	})
-
-	t.Run("password_missing_lowercase_400_bad_request", func(t *testing.T) {
-		pw := "N0LOWERCASEPA$SW0RD"
-		body := fmt.Sprintf(bodyFmt, conf.ADMIN_NAME, conf.ADMIN_EMAIL, conf.ADMIN_PHONE, pw, pw)
-
-		testCreateAccountClientError(
-			t, app, dbs, utils.CreateAccount, body, 400, utils.ErrorBadRequest, nil, nil, &models.Log{
-				ClientIP:        clientIP,
-				ClientOperation: utils.CreateAccount,
-				Detail:          "Missing lowercase",
-				Level:           "warn",
-				Message:         utils.ErrorAcctPW,
-				RequestBody:     body,
-			},
-		)
-	})
-
-	t.Run("password_missing_number_400_bad_request", func(t *testing.T) {
-		pw := "nONumberPA$SWoRD"
-		body := fmt.Sprintf(bodyFmt, conf.ADMIN_NAME, conf.ADMIN_EMAIL, conf.ADMIN_PHONE, pw, pw)
-
-		testCreateAccountClientError(
-			t, app, dbs, utils.CreateAccount, body, 400, utils.ErrorBadRequest, nil, nil, &models.Log{
-				ClientIP:        clientIP,
-				ClientOperation: utils.CreateAccount,
-				Detail:          "Missing number",
-				Level:           "warn",
-				Message:         utils.ErrorAcctPW,
-				RequestBody:     body,
-			},
-		)
-	})
-
-	t.Run("password_missing_special_char_400_bad_request", func(t *testing.T) {
-		pw := "nOSp3cialCharPA5SWoRD"
-		body := fmt.Sprintf(bodyFmt, conf.ADMIN_NAME, conf.ADMIN_EMAIL, conf.ADMIN_PHONE, pw, pw)
-
-		testCreateAccountClientError(
-			t, app, dbs, utils.CreateAccount, body, 400, utils.ErrorBadRequest, nil, nil, &models.Log{
-				ClientIP:        clientIP,
-				ClientOperation: utils.CreateAccount,
-				Detail:          "Missing special char",
-				Level:           "warn",
-				Message:         utils.ErrorAcctPW,
-				RequestBody:     body,
-			},
-		)
-	})
-
-	t.Run("password_has_whitespace_400_bad_request", func(t *testing.T) {
-		pw := "h@s Spa(3	PA5SWoRD"
-		body := fmt.Sprintf(bodyFmt, conf.ADMIN_NAME, conf.ADMIN_EMAIL, conf.ADMIN_PHONE, pw, pw)
-
-		testCreateAccountClientError(
-			t, app, dbs, utils.CreateAccount, body, 400, utils.ErrorBadRequest, nil, nil, &models.Log{
-				ClientIP:        clientIP,
-				ClientOperation: utils.CreateAccount,
-				Detail:          "Has whitespace",
-				Level:           "warn",
-				Message:         utils.ErrorAcctPW,
-				RequestBody:     body,
-			},
-		)
-	})
-
-	t.Run("valid_body_user_already_exists_409_conflict", func(t *testing.T) {
+	t.Run("valid_body_user_already_exists_500_error", func(t *testing.T) {
 		setup.SetUpLogger(t, dbs)
 		setup.SetUpApiGatewayWithData(t, dbs, conf)
 
 		body := fmt.Sprintf(
-			bodyFmt,
-			conf.ADMIN_NAME, conf.ADMIN_EMAIL, conf.ADMIN_PHONE, helpers.VALID_PW, helpers.VALID_PW,
+			bodyFmt, helpers.VALID_NAME_1, helpers.VALID_EMAIL_1, helpers.VALID_PHONE_1, helpers.HexHash1,
 		)
 
 		testCreateAccountClientError(
@@ -495,20 +481,20 @@ func testCreateAccount(
 	t.Run("valid_body_201_created", func(t *testing.T) {
 		body := fmt.Sprintf(
 			bodyFmt,
-			conf.ADMIN_NAME, conf.ADMIN_EMAIL, conf.ADMIN_PHONE, helpers.VALID_PW, helpers.VALID_PW,
+			helpers.VALID_NAME_2, helpers.VALID_EMAIL_2, helpers.VALID_PHONE_2, helpers.HexHash2,
 		)
 
-		testCreateAccountSuccess(t, app, dbs, utils.CreateAccount, body, conf.ADMIN_EMAIL)
+		testCreateAccountSuccess(t, app, dbs, utils.CreateAccount, body, helpers.VALID_EMAIL_2)
 	})
 
 	t.Run("valid_body_irrelevant_data_201_created", func(t *testing.T) {
 		validBodyIrrelevantData := fmt.Sprintf(
-			`{"name":"%s","email":"%s","phone":"%s","password":"%s","password_2":"%s","abc":123}`,
-			conf.ADMIN_NAME, conf.ADMIN_EMAIL, conf.ADMIN_PHONE, helpers.VALID_PW, helpers.VALID_PW,
+			`{"name":"%s","email":"%s","phone":"%s","password":"%s","abc":123}`,
+			helpers.VALID_NAME_2, helpers.VALID_EMAIL_2, helpers.VALID_PHONE_2, helpers.HexHash2,
 		)
 
 		testCreateAccountSuccess(
-			t, app, dbs, utils.CreateAccount, validBodyIrrelevantData, conf.ADMIN_EMAIL,
+			t, app, dbs, utils.CreateAccount, validBodyIrrelevantData, helpers.VALID_EMAIL_2,
 		)
 	})
 }

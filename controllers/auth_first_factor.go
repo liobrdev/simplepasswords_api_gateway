@@ -1,12 +1,12 @@
 package controllers
 
 import (
+	"encoding/hex"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
-	"golang.org/x/crypto/bcrypt"
 
 	"github.com/liobrdev/simplepasswords_api_gateway/models"
 	"github.com/liobrdev/simplepasswords_api_gateway/utils"
@@ -37,10 +37,8 @@ func (H Handler) AuthFirstFactor(c *fiber.Ctx) error {
 		return utils.RespondWithError(c, 400, utils.ErrorBadRequest, nil, nil)
 	}
 
-	if body.Email != H.Conf.ADMIN_EMAIL {
-		if body.Email == "" {
-			H.logger(c, utils.AuthFirstFactor, body.Email, "", "warn", utils.ErrorAcctEmail)
-		}
+	if !utils.EmailRegexp.Match([]byte(body.Email)) {
+		H.logger(c, utils.AuthFirstFactor, body.Email, "", "warn", utils.ErrorAcctEmail)
 
 		return utils.RespondWithError(c, 400, utils.ErrorFailedLogin, nil, nil)
 	}
@@ -73,9 +71,11 @@ func (H Handler) AuthFirstFactor(c *fiber.Ctx) error {
 		return utils.RespondWithError(c, 400, utils.ErrorFailedLogin, nil, nil)
 	}
 
-	if err := bcrypt.CompareHashAndPassword(
-		user.PasswordHash, []byte(H.Conf.ADMIN_SALT_1 + body.Password + H.Conf.ADMIN_SALT_2),
-	); err != nil {
+	if password, err := hex.DecodeString(body.Password); err != nil {
+		H.logger(c, utils.AuthFirstFactor, err.Error(), "", "error", utils.ErrorAcctPW)
+
+		return utils.RespondWithError(c, 400, utils.ErrorBadRequest, nil, nil)
+	} else if !utils.CompareHashAndPassword(user.PasswordHash, password, user.PasswordSalt) {
 		return utils.RespondWithError(c, 400, utils.ErrorFailedLogin, nil, nil)
 	}
 

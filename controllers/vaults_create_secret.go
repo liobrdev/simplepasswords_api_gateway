@@ -33,6 +33,7 @@ func (H Handler) VaultsCreateSecret(c *fiber.Ctx) error {
 	agent := fiber.Post("http://" + H.Conf.VAULTS_HOST + ":" + H.Conf.VAULTS_PORT + "/api/secrets")
 	agent.Set("Authorization", "Token " + H.Conf.VAULTS_ACCESS_TOKEN)
 	agent.Set("Client-Operation", utils.CreateSecret)
+	agent.Set(H.Conf.PASSWORD_HEADER_KEY, c.Get(H.Conf.PASSWORD_HEADER_KEY)[:64])
 	agent.JSON(&reqBody)
 
 	_, _, errString := checkVaultsResponse(agent)

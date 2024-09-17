@@ -33,11 +33,11 @@ func testAuthFirstFactor(
 	}
 
 	bodyFmt := `{"email":"%s","password":"%s"}`
-
+	
 	setup.SetUpLogger(t, dbs)
 
 	t.Run("wrong_client_operation_header_400_bad_request", func(t *testing.T) {
-		body := fmt.Sprintf(bodyFmt, conf.ADMIN_EMAIL, helpers.VALID_PW)
+		body := fmt.Sprintf(bodyFmt, helpers.VALID_EMAIL_1, helpers.HexHash1)
 
 		testAuthFirstFactorClientError(
 			t, app, dbs, "wrong_operation", body, 400, utils.ErrorBadRequest, nil, nil, &models.Log{
@@ -87,7 +87,7 @@ func testAuthFirstFactor(
 			},
 		)
 
-		body := `[` + fmt.Sprintf(bodyFmt, conf.ADMIN_EMAIL, helpers.VALID_PW) + `]`
+		body := `[` + fmt.Sprintf(bodyFmt, helpers.VALID_EMAIL_1, helpers.HexHash1) + `]`
 
 		testAuthFirstFactorClientError(
 			t, app, dbs, utils.AuthFirstFactor, body, 400, utils.ErrorBadRequest, nil, nil, &models.Log{
@@ -168,7 +168,7 @@ func testAuthFirstFactor(
 	})
 
 	t.Run("missing_email_400_bad_request", func(t *testing.T) {
-		body := fmt.Sprintf(`{"emial":"%s","password":"%s"}`, conf.ADMIN_EMAIL, helpers.VALID_PW)
+		body := fmt.Sprintf(`{"emial":"%s","password":"%s"}`, helpers.VALID_EMAIL_1, helpers.HexHash1)
 
 		testAuthFirstFactorClientError(
 			t, app, dbs, utils.AuthFirstFactor, body, 400, utils.ErrorFailedLogin, nil, nil, &models.Log{
@@ -183,7 +183,7 @@ func testAuthFirstFactor(
 	})
 
 	t.Run("null_email_400_bad_request", func(t *testing.T) {
-		body := `{"email":null,"password":"` + helpers.VALID_PW + `"}`
+		body := `{"email":null,"password":"` + helpers.HexHash1 + `"}`
 
 		testAuthFirstFactorClientError(
 			t, app, dbs, utils.AuthFirstFactor, body, 400, utils.ErrorFailedLogin, nil, nil, &models.Log{
@@ -198,7 +198,7 @@ func testAuthFirstFactor(
 	})
 
 	t.Run("empty_email_400_bad_request", func(t *testing.T) {
-		body := fmt.Sprintf(bodyFmt, "", helpers.VALID_PW)
+		body := fmt.Sprintf(bodyFmt, "", helpers.HexHash1)
 
 		testAuthFirstFactorClientError(
 			t, app, dbs, utils.AuthFirstFactor, body, 400, utils.ErrorFailedLogin, nil, nil, &models.Log{
@@ -213,7 +213,7 @@ func testAuthFirstFactor(
 	})
 
 	t.Run("invalid_email_400_bad_request", func(t *testing.T) {
-		body := fmt.Sprintf(bodyFmt, "not-admin@test.com", helpers.VALID_PW)
+		body := fmt.Sprintf(bodyFmt, "not@email@test.com", helpers.HexHash1)
 		testAuthFirstFactorClientError(
 			t, app, dbs, utils.AuthFirstFactor, body, 400, utils.ErrorFailedLogin, nil, nil, nil,
 		)
@@ -221,7 +221,7 @@ func testAuthFirstFactor(
 
 	t.Run("missing_password_400_bad_request", func(t *testing.T) {
 		body := fmt.Sprintf(
-			`{"email":"%s","passwrod":"%s"}`, conf.ADMIN_EMAIL, helpers.VALID_PW,
+			`{"email":"%s","passwrod":"%s"}`, helpers.VALID_EMAIL_1, helpers.HexHash1,
 		)
 
 		testAuthFirstFactorClientError(
@@ -237,7 +237,7 @@ func testAuthFirstFactor(
 	})
 
 	t.Run("null_password_400_bad_request", func(t *testing.T) {
-		body := `{"email":"` + conf.ADMIN_EMAIL + `","password":null}`
+		body := `{"email":"` + helpers.VALID_EMAIL_1 + `","password":null}`
 
 		testAuthFirstFactorClientError(
 			t, app, dbs, utils.AuthFirstFactor, body, 400, utils.ErrorFailedLogin, nil, nil, &models.Log{
@@ -252,7 +252,7 @@ func testAuthFirstFactor(
 	})
 
 	t.Run("empty_password_400_bad_request", func(t *testing.T) {
-		body := fmt.Sprintf(bodyFmt, conf.ADMIN_EMAIL, "")
+		body := fmt.Sprintf(bodyFmt, helpers.VALID_EMAIL_1, "")
 
 		testAuthFirstFactorClientError(
 			t, app, dbs, utils.AuthFirstFactor, body, 400, utils.ErrorFailedLogin, nil, nil, &models.Log{
@@ -270,12 +270,12 @@ func testAuthFirstFactor(
 		setup.SetUpLogger(t, dbs)
 		setup.SetUpApiGatewayWithData(t, dbs, conf)
 
-		body := fmt.Sprintf(bodyFmt, conf.ADMIN_EMAIL, helpers.VALID_PW + "abc123")
+		body := fmt.Sprintf(bodyFmt, helpers.VALID_EMAIL_2, helpers.HexHash2 + "abc123")
 		testAuthFirstFactorClientError(
 			t, app, dbs, utils.AuthFirstFactor, body, 400, utils.ErrorFailedLogin, nil, nil, nil,
 		)
 
-		body = fmt.Sprintf(bodyFmt, "not-admin@test.com", helpers.VALID_PW)
+		body = fmt.Sprintf(bodyFmt, helpers.VALID_EMAIL_2, helpers.HexHash2)
 		testAuthFirstFactorClientError(
 			t, app, dbs, utils.AuthFirstFactor, body, 400, utils.ErrorFailedLogin, nil, nil, nil,
 		)
@@ -286,13 +286,13 @@ func testAuthFirstFactor(
 	})
 
 	t.Run("valid_body_200_ok", func(t *testing.T) {
-		body := fmt.Sprintf(bodyFmt, conf.ADMIN_EMAIL, helpers.VALID_PW)
+		body := fmt.Sprintf(bodyFmt, helpers.VALID_EMAIL_1, helpers.HexHash1)
 		testAuthFirstFactorSuccess(t, app, dbs, utils.AuthFirstFactor, body, conf)
 	})
 
 	t.Run("valid_body_irrelevant_data_200_ok", func(t *testing.T) {
 		validBodyIrrelevantData := fmt.Sprintf(
-			`{"email":"%s","password":"%s","abc":123}`, conf.ADMIN_EMAIL, helpers.VALID_PW,
+			`{"email":"%s","password":"%s","abc":123}`, helpers.VALID_EMAIL_1, helpers.HexHash1,
 		)
 		testAuthFirstFactorSuccess(t, app, dbs, utils.AuthFirstFactor, validBodyIrrelevantData, conf)
 	})

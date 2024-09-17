@@ -6,6 +6,11 @@ import (
 	"github.com/liobrdev/simplepasswords_api_gateway/utils"
 )
 
+type MoveSecretRequestBody struct {
+	Priority 	string `json:"secret_priority"`
+	EntrySlug string `json:"entry_slug"`
+}
+
 func (H Handler) VaultsMoveSecret(c *fiber.Ctx) error {
 	if clientOperation := c.Get("Client-Operation"); clientOperation != utils.MoveSecret {
 		H.logger(c, utils.MoveSecret, clientOperation, "", "warn", utils.ErrorClientOperation)
@@ -13,7 +18,7 @@ func (H Handler) VaultsMoveSecret(c *fiber.Ctx) error {
 		return utils.RespondWithError(c, 400, utils.ErrorBadRequest, nil, nil)
 	}
 
-	reqBody := UpdateSecretRequestBody{}
+	reqBody := MoveSecretRequestBody{}
 
 	if err := c.BodyParser(&reqBody); err != nil {
 		H.logger(c, utils.MoveSecret, err.Error(), "", "error", utils.ErrorParse)

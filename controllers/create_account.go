@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"encoding/hex"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -15,8 +16,7 @@ type CreateAccountRequestBody struct {
 	Name      	string `json:"name"`
 	Email     	string `json:"email"`
 	Phone				string `json:"phone"`
-	Password  	string `json:"password"`
-	Password2 	string `json:"password_2"`
+	Password		string `json:"password"`
 }
 
 type CreateAccountResponseBody struct {
@@ -39,26 +39,20 @@ func (H Handler) CreateAccount(c *fiber.Ctx) error {
 		return utils.RespondWithError(c, 400, utils.ErrorBadRequest, nil, nil)
 	}
 
-	if body.Name != H.Conf.ADMIN_NAME {
-		if body.Name == "" {
-			H.logger(c, utils.CreateAccount, body.Name, "", "warn", utils.ErrorAcctName)
-		}
+	if !utils.NameRegexp.Match([]byte(body.Name)) {
+		H.logger(c, utils.CreateAccount, body.Name, "", "warn", utils.ErrorAcctName)
 
 		return utils.RespondWithError(c, 400, utils.ErrorBadRequest, nil, nil)
 	}
 
-	if body.Email != H.Conf.ADMIN_EMAIL {
-		if body.Email == "" {
-			H.logger(c, utils.CreateAccount, body.Email, "", "warn", utils.ErrorAcctEmail)
-		}
+	if !utils.EmailRegexp.Match([]byte(body.Email)) {
+		H.logger(c, utils.CreateAccount, body.Email, "", "warn", utils.ErrorAcctEmail)
 
 		return utils.RespondWithError(c, 400, utils.ErrorBadRequest, nil, nil)
 	}
 
-	if body.Phone != H.Conf.ADMIN_PHONE {
-		if body.Phone == "" {
-			H.logger(c, utils.CreateAccount, body.Phone, "", "warn", utils.ErrorAcctPhone)
-		}
+	if !utils.PhoneRegexp.Match([]byte(body.Phone)) {
+		H.logger(c, utils.CreateAccount, body.Phone, "", "warn", utils.ErrorAcctPhone)
 
 		return utils.RespondWithError(c, 400, utils.ErrorBadRequest, nil, nil)
 	}
@@ -69,57 +63,20 @@ func (H Handler) CreateAccount(c *fiber.Ctx) error {
 		return utils.RespondWithError(c, 400, utils.ErrorBadRequest, nil, nil)
 	}
 
-	if body.Password != body.Password2 {
-		H.logger(c, utils.CreateAccount, "", "", "warn", utils.ErrorNonMatchPW)
-
-		return utils.RespondWithError(c, 400, utils.ErrorBadRequest, nil, nil)
-	}
-
-	if body.Password == body.Email {
-		H.logger(c, utils.CreateAccount, "Password is email", "", "warn", utils.ErrorAcctPW)
-
-		return utils.RespondWithError(c, 400, utils.ErrorBadRequest, nil, nil)
-	}
-
-	if len(body.Password) > 72 - len(H.Conf.ADMIN_SALT_1) - len(H.Conf.ADMIN_SALT_2) {
-		return utils.RespondWithError(c, 400, utils.ErrorBadRequest, nil, nil)
-	}
-
-	if len(body.Password) < 16 {
-		return utils.RespondWithError(c, 400, utils.ErrorBadRequest, nil, nil)
-	}
-
-	if !utils.ContainsUppercase(body.Password) {
-		H.logger(c, utils.CreateAccount, "Missing uppercase", "", "warn", utils.ErrorAcctPW)
-
-		return utils.RespondWithError(c, 400, utils.ErrorBadRequest, nil, nil)
-	}
-
-	if !utils.ContainsLowercase(body.Password) {
-		H.logger(c, utils.CreateAccount, "Missing lowercase", "", "warn", utils.ErrorAcctPW)
-
-		return utils.RespondWithError(c, 400, utils.ErrorBadRequest, nil, nil)
-	}
-
-	if !utils.ContainsNumber(body.Password) {
-		H.logger(c, utils.CreateAccount, "Missing number", "", "warn", utils.ErrorAcctPW)
-
-		return utils.RespondWithError(c, 400, utils.ErrorBadRequest, nil, nil)
-	}
-
-	if !utils.ContainsSpecialChar(body.Password) {
-		H.logger(c, utils.CreateAccount, "Missing special char", "", "warn", utils.ErrorAcctPW)
-
-		return utils.RespondWithError(c, 400, utils.ErrorBadRequest, nil, nil)
-	}
-
-	if utils.ContainsWhitespace(body.Password) {
-		H.logger(c, utils.CreateAccount, "Has whitespace", "", "warn", utils.ErrorAcctPW)
-
-		return utils.RespondWithError(c, 400, utils.ErrorBadRequest, nil, nil)
-	}
-
 	var user models.User
+
+	if password, err := hex.DecodeString(body.Password); err != nil {
+		H.logger(c, utils.CreateAccount, err.Error(), "", "error", "Failed decode password")
+
+		return utils.RespondWithError(c, 400, utils.ErrorBadRequest, nil, nil)
+	} else if hash, salt, err := utils.GenerateUserCredentials(password); err != nil {
+		H.logger(c, utils.CreateAccount, err.Error(), "", "error", "Failed generate user credentials")
+
+		return utils.RespondWithError(c, 500, utils.ErrorServer, nil, nil)
+	} else {
+		user.PasswordHash = hash
+		user.PasswordSalt = salt
+	}
 
 	if userSlug, err := utils.GenerateSlug(32); err != nil {
 		H.logger(c, utils.CreateAccount, err.Error(), "", "error", "Failed generate user.Slug")
@@ -127,14 +84,6 @@ func (H Handler) CreateAccount(c *fiber.Ctx) error {
 		return utils.RespondWithError(c, 500, utils.ErrorServer, nil, nil)
 	} else {
 		user.Slug = userSlug
-	}
-
-	if hash, err := utils.GenerateUserCredentials(body.Password, H.Conf); err != nil {
-		H.logger(c, utils.CreateAccount, err.Error(), "", "error", "Failed generate user credentials")
-
-		return utils.RespondWithError(c, 500, utils.ErrorServer, nil, nil)
-	} else {
-		user.PasswordHash = hash
 	}
 
 	user.Name = body.Name
