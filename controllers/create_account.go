@@ -78,7 +78,7 @@ func (H Handler) CreateAccount(c *fiber.Ctx) error {
 		user.PasswordSalt = salt
 	}
 
-	if userSlug, err := utils.GenerateSlug(32); err != nil {
+	if userSlug, err := utils.GenerateSlug(16); err != nil {
 		H.logger(c, utils.CreateAccount, err.Error(), "", "error", "Failed generate user.Slug")
 
 		return utils.RespondWithError(c, 500, utils.ErrorServer, nil, nil)

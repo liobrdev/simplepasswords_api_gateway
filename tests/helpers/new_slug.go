@@ -7,7 +7,7 @@ import (
 )
 
 func NewSlug(t *testing.T) string {
-	if slug, err := utils.GenerateSlug(32); err != nil {
+	if slug, err := utils.GenerateSlug(16); err != nil {
 		t.Errorf("Failed to generate new slug: %s", err.Error())
 		panic(err)
 	} else {
