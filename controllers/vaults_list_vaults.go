@@ -14,11 +14,11 @@ func (H Handler) VaultsListVaults(c *fiber.Ctx) error {
 		return utils.RespondWithError(c, 400, utils.ErrorBadRequest, nil, nil)
 	}
 
-	var user *models.User
+	var session *models.ClientSession
 	var ok bool
 
-	if user, ok = c.UserContext().Value(userContextKey{}).(*models.User); !ok {
-		H.logger(c, utils.ListVaults, "", "", "error", "Failed user context")
+	if session, ok = c.UserContext().Value(sessionContextKey{}).(*models.ClientSession); !ok {
+		H.logger(c, utils.ListVaults, "", "", "error", "Failed session.User context")
 
 		return utils.RespondWithError(c, 500, utils.ErrorServer, nil, nil)
 	}
@@ -27,7 +27,7 @@ func (H Handler) VaultsListVaults(c *fiber.Ctx) error {
 	agent.Set("Content-Type", "application/json")
 	agent.Set("Client-Operation", utils.ListVaults)
 	agent.Set("Authorization", "Token " + H.Conf.VAULTS_ACCESS_TOKEN)
-	agent.Set("User-Slug", user.Slug )
+	agent.Set("User-Slug", session.UserSlug )
 
 	_, body, errString := checkVaultsResponse(agent)
 

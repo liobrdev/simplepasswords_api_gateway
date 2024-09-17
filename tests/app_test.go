@@ -57,6 +57,10 @@ func runTests(t *testing.T, app *fiber.App, dbs *databases.Databases, conf *conf
 		testAuthorizeRequest(t, app, dbs, conf)
 	})
 
+	t.Run("test_logout_account", func(t *testing.T) {
+		testLogoutAccount(t, app, dbs, conf)
+	})
+
 	t.Run("test_retrieve_user", func(t *testing.T) {
 		testRetrieveUser(t, app, dbs, conf)
 	})

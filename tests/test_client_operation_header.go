@@ -30,18 +30,23 @@ func testClientOperationHeader(
 	dummySlug := helpers.NewSlug(t)
 	
 	clientOperations := map[string][]string{
-		"create_vault":		{"POST", "/api/vaults"},
-		"list_vaults":		{"GET", "/api/vaults"},
-		"retrieve_vault":	{"GET", "/api/vaults/" + dummySlug},
-		"update_vault":		{"PATCH", "/api/vaults/" + dummySlug},
-		"delete_vault":		{"DELETE", "/api/vaults/" + dummySlug},
-		"create_entry":		{"POST", "/api/entries"},
-		"retrieve_entry":	{"GET", "/api/entries/" + dummySlug},
-		"update_entry":		{"PATCH", "/api/entries/" + dummySlug},
-		"delete_entry":		{"DELETE", "/api/entries/" + dummySlug},
-		"create_secret":	{"POST", "/api/secrets"},
-		"update_secret":	{"PATCH", "/api/secrets/" + dummySlug},
-		"delete_secret":	{"DELETE", "/api/secrets/" + dummySlug},
+		"create_account":			{"POST", "/api/auth/create_account"},
+		"auth_first_factor":	{"POST", "/api/auth/first_factor"},
+		"auth_second_factor":	{"POST", "/api/auth/second_factor"},
+		"logout_account":			{"POST", "/api/auth/logout_account"},
+		"retrieve_user":			{"GET", "/api/users"},
+		"create_vault":				{"POST", "/api/vaults"},
+		"list_vaults":				{"GET", "/api/vaults"},
+		"retrieve_vault":			{"GET", "/api/vaults/" + dummySlug},
+		"update_vault":				{"PATCH", "/api/vaults/" + dummySlug},
+		"delete_vault":				{"DELETE", "/api/vaults/" + dummySlug},
+		"create_entry":				{"POST", "/api/entries"},
+		"retrieve_entry":			{"GET", "/api/entries/" + dummySlug},
+		"update_entry":				{"PATCH", "/api/entries/" + dummySlug},
+		"delete_entry":				{"DELETE", "/api/entries/" + dummySlug},
+		"create_secret":			{"POST", "/api/secrets"},
+		"update_secret":			{"PATCH", "/api/secrets/" + dummySlug},
+		"delete_secret":			{"DELETE", "/api/secrets/" + dummySlug},
 	}
 
 	setup.SetUpLogger(t, dbs)

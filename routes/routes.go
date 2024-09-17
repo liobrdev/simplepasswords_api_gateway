@@ -23,6 +23,8 @@ func Register(app *fiber.App, dbs *databases.Databases, conf *config.AppConfig) 
 		authApi.Get("/restricted", H.Restricted)
 	}
 
+	authApi.Post("/logout_account", H.LogoutAccount)
+
 	usersApi := api.Group("/users")
 	usersApi.Get("/", H.RetrieveUser)
 

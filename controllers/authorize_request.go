@@ -13,7 +13,7 @@ import (
 	"github.com/liobrdev/simplepasswords_api_gateway/utils"
 )
 
-type userContextKey struct{}
+type sessionContextKey struct{}
 
 var privilegedOps = []string{
 	utils.CreateVault,
@@ -170,7 +170,7 @@ func (H Handler) AuthorizeRequest(c *fiber.Ctx) error {
 		}
 	}
 
-	c.SetUserContext(context.WithValue(context.Background(), userContextKey{}, &thisSession.User))
+	c.SetUserContext(context.WithValue(context.Background(), sessionContextKey{}, &thisSession))
 
 	return c.Next()
 }

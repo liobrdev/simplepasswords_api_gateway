@@ -14,14 +14,14 @@ func (H Handler) RetrieveUser(c *fiber.Ctx) error {
 		return utils.RespondWithError(c, 400, utils.ErrorBadRequest, nil, nil)
 	}
 
-	var user *models.User
+	var session *models.ClientSession
 	var ok bool
 
-	if user, ok = c.UserContext().Value(userContextKey{}).(*models.User); !ok {
-		H.logger(c, utils.RetrieveUser, "", "", "error", "Failed user context")
+	if session, ok = c.UserContext().Value(sessionContextKey{}).(*models.ClientSession); !ok {
+		H.logger(c, utils.RetrieveUser, "", "", "error", "Failed session.User context")
 
 		return utils.RespondWithError(c, 500, utils.ErrorServer, nil, nil)
 	}
 
-	return c.Status(200).JSON(&models.User{ Slug: user.Slug, Name: user.Name })
+	return c.Status(200).JSON(&models.User{ Slug: session.UserSlug, Name: session.User.Name })
 }

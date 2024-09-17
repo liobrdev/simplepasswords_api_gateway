@@ -4,6 +4,7 @@ const (
 	AuthFirstFactor	 string = "auth_first_factor"
 	AuthSecondFactor string = "auth_second_factor"
 	CreateAccount		 string = "create_account"
+	LogoutAccount		 string = "logout_account"
 	TestAuthReq			 string = "test_auth_req"
 	RetrieveUser		 string = "retrieve_user"
 
