@@ -335,7 +335,8 @@ func testAuthSecondFactor(
 
 	t.Run("valid_body_failed_authenticate_400_bad_request", func(t *testing.T) {
 		setup.SetUpLogger(t, dbs)
-		_, _, _, validMFATokens, _ := setup.SetUpApiGatewayWithData(t, dbs, conf)
+		user := setup.SetUpApiGatewayWithData(t, dbs)
+		validMFATokens := setup.CreateValidTestMFATokens(&user, t, dbs)
 
 		body := fmt.Sprintf(bodyFmt, dummyMFAToken, validMFATokens[0].PhoneOTP)
 		testAuthSecondFactorClientError(
@@ -353,7 +354,8 @@ func testAuthSecondFactor(
 	})
 
 	t.Run("valid_token_expired_400_bad request", func(t *testing.T) {
-		_, _, _, _, expiredMFATokens := setup.SetUpApiGatewayWithData(t, dbs, conf)
+		user := setup.SetUpApiGatewayWithData(t, dbs)
+		expiredMFATokens := setup.CreateExpiredTestMFATokens(&user, t, dbs)
 
 		body := fmt.Sprintf(bodyFmt, expiredMFATokens[1].MFAToken, expiredMFATokens[1].PhoneOTP)
 		testAuthSecondFactorClientError(
@@ -366,13 +368,15 @@ func testAuthSecondFactor(
 	})
 
 	t.Run("valid_body_200_ok", func(t *testing.T) {
-		_, _, _, validMFATokens, _ := setup.SetUpApiGatewayWithData(t, dbs, conf)
+		user := setup.SetUpApiGatewayWithData(t, dbs)
+		validMFATokens := setup.CreateValidTestMFATokens(&user, t, dbs)
 		body := fmt.Sprintf(bodyFmt, validMFATokens[0].MFAToken, validMFATokens[0].PhoneOTP)
 		testAuthSecondFactorSuccess(t, app, dbs, utils.AuthSecondFactor, body, helpers.VALID_EMAIL_1)
 	})
 
 	t.Run("valid_body_irrelevant_data_200_ok", func(t *testing.T) {
-		_, _, _, validMFATokens, _ := setup.SetUpApiGatewayWithData(t, dbs, conf)
+		user := setup.SetUpApiGatewayWithData(t, dbs)
+		validMFATokens := setup.CreateValidTestMFATokens(&user, t, dbs)
 		validBodyIrrelevantData := fmt.Sprintf(
 			`{"mfa_token":"%s","phone_otp":"%s","abc":123}`,
 			validMFATokens[0].MFAToken, validMFATokens[0].PhoneOTP,
@@ -409,13 +413,13 @@ func testAuthSecondFactorSuccess(
 ) {
 	var sessionCount int64
 	helpers.CountClientSessions(t, dbs.ApiGateway, &sessionCount)
-	require.EqualValues(t, 4, sessionCount)
+	require.EqualValues(t, 0, sessionCount)
 
 	resp := newRequestAuthSecondFactor(t, app, clientOperation, body)
 	require.Equal(t, 200, resp.StatusCode)
 
 	helpers.CountClientSessions(t, dbs.ApiGateway, &sessionCount)
-	require.EqualValues(t, 5, sessionCount)
+	require.EqualValues(t, 1, sessionCount)
 
 	if respBody, err := io.ReadAll(resp.Body); err != nil {
 		t.Fatalf("Read response body failed: %s", err.Error())
@@ -432,6 +436,8 @@ func testAuthSecondFactorSuccess(
 		helpers.QueryTestUserByEmail(t, dbs.ApiGateway, &user, email)
 		require.Equal(t, user.Slug, authSecondFactorRespBody.User.Slug)
 		require.Equal(t, user.Name, authSecondFactorRespBody.User.Name)
+		require.Equal(t, user.EmailIsVerified, authSecondFactorRespBody.User.EmailIsVerified)
+		require.Equal(t, user.PhoneIsVerified, authSecondFactorRespBody.User.PhoneIsVerified)
 
 		var session models.ClientSession
 		helpers.QueryTestClientSessionLatest(t, dbs.ApiGateway, &session)

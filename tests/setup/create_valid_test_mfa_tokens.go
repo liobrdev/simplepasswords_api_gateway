@@ -11,7 +11,7 @@ import (
 	"github.com/liobrdev/simplepasswords_api_gateway/utils"
 )
 
-func createValidTestMFATokens(
+func CreateValidTestMFATokens(
 	user *models.User, t *testing.T, dbs *databases.Databases,
 ) (tokens []controllers.AuthSecondFactorRequestBody) {
 
@@ -31,8 +31,9 @@ func createValidTestMFATokens(
 				UserSlug:  user.Slug,
 				KeyDigest: utils.HashToken(mfaTokenString),
 				OTPDigest: utils.HashToken(strings.Join(oneTimePasscode, "")),
-				CreatedAt: now,
-				ExpiresAt: now.Add(time.Duration(5) * time.Minute),
+				TokenKey:  mfaTokenString[:16],
+				CreatedAt: now.Add(time.Duration(1) * -time.Minute),
+				ExpiresAt: now.Add(time.Duration(4) * time.Minute),
 			})
 
 			tokens = append(tokens, controllers.AuthSecondFactorRequestBody{

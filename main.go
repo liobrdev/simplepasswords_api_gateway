@@ -26,6 +26,8 @@ func main() {
 		&models.User{},
 		&models.ClientSession{},
 		&models.MFAToken{},
+		&models.EmailVerificationToken{},
+		&models.PhoneVerificationToken{},
 	); err != nil {
 		log.Fatalln("Failed api_gateway database auto-migrate:", err.Error())
 	}

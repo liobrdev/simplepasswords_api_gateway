@@ -1,0 +1,19 @@
+<!-- template.html -->
+<!DOCTYPE html>
+<html>
+    <head></head>
+    <body style="font-family:sans-serif">
+        <p>Hello {{.Name}},</p>
+        <p>
+            Please verify your email address by entering security code
+            <b style="font-size:1.1em">{{.Otp}}</b> at the following link:
+        </p>
+        <h2><a href='{{.Link}}'>Verify your email</a></h2>
+        <p>or copy and paste the following URL into your browser and enter the above security code:
+        <p><a href='{{.Link}}'>{{.Link}}</a></p>
+        <i>Note: this link is only valid for the next 10 minutes</i>
+        <br/>
+        <p>Thanks,</p>
+        <p>The SimplePasswords Team</p>
+    </body>
+</html>

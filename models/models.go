@@ -10,6 +10,8 @@ type User struct {
 	EmailAddress    string    `json:"email_address,omitempty" gorm:"unique;not null"`
 	PhoneNumber     string    `json:"phone_number,omitempty" gorm:"unique;not null"`
 	IsActive        bool      `json:"-" gorm:"default:true;not null"`
+	EmailIsVerified bool      `json:"email_is_verified" gorm:"default:false;not null"`
+	PhoneIsVerified bool      `json:"phone_is_verified" gorm:"default:false;not null"`
 	CreatedAt       time.Time `json:"-" gorm:"autoCreateTime:nano;not null"`
 	UpdatedAt       time.Time `json:"-" gorm:"autoUpdateTime:nano;not null"`
 }
@@ -24,11 +26,32 @@ type ClientSession struct {
 	ExpiresAt time.Time `gorm:"not null"`
 }
 
+type EmailVerificationToken struct {
+	UserSlug  string    `gorm:"not null"`
+	User      User      `gorm:"foreignKey:UserSlug;constraint:OnDelete:CASCADE"`
+	KeyDigest []byte    `gorm:"unique;not null"`
+	OTPDigest []byte    `gorm:"unique;not null"`
+	TokenKey  string    `gorm:"primaryKey;size:16;not null"`
+	CreatedAt time.Time `gorm:"autoCreateTime:false;not null"`
+	ExpiresAt time.Time `gorm:"not null"`
+}
+
+type PhoneVerificationToken struct {
+	UserSlug  string    `gorm:"not null"`
+	User      User      `gorm:"foreignKey:UserSlug;constraint:OnDelete:CASCADE"`
+	KeyDigest []byte    `gorm:"unique;not null"`
+	OTPDigest []byte    `gorm:"unique;not null"`
+	TokenKey  string    `gorm:"primaryKey;size:16;not null"`
+	CreatedAt time.Time `gorm:"autoCreateTime:false;not null"`
+	ExpiresAt time.Time `gorm:"not null"`
+}
+
 type MFAToken struct {
 	UserSlug  string    `gorm:"not null"`
 	User      User      `gorm:"foreignKey:UserSlug;constraint:OnDelete:CASCADE"`
-	KeyDigest	[]byte    `gorm:"primaryKey;not null"`
-	OTPDigest	[]byte		`gorm:"unique;not null"`
+	KeyDigest []byte    `gorm:"unique;not null"`
+	OTPDigest []byte    `gorm:"unique;not null"`
+	TokenKey  string    `gorm:"primaryKey;size:16;not null"`
 	CreatedAt time.Time `gorm:"autoCreateTime:false;not null"`
 	ExpiresAt time.Time `gorm:"not null"`
 }

@@ -31,10 +31,11 @@ func testRetrieveUser(
 
 	t.Run("wrong_client_operation_header_400_bad_request", func(t *testing.T) {
 		setup.SetUpLogger(t, dbs)
-		_, validSessionTokens, _, _, _ := setup.SetUpApiGatewayWithData(t, dbs, conf)
+		user := setup.SetUpApiGatewayWithData(t, dbs)
+		validTokens := setup.CreateValidTestClientSessions(&user, t, dbs, conf)
 
 		testRetrieveUserClientError(
-			t, app, dbs, "wrong_operation", "Token " + validSessionTokens[0], 400, utils.ErrorBadRequest,
+			t, app, dbs, "wrong_operation", "Token " + validTokens[0], 400, utils.ErrorBadRequest,
 			nil, nil, &models.Log{
 				ClientIP:        clientIP,
 				ClientOperation: utils.RetrieveUser,
@@ -46,18 +47,12 @@ func testRetrieveUser(
 	})
 
 	t.Run("valid_token_200_ok", func(t *testing.T) {
-		user, validSessionTokens, _, _, _ := setup.SetUpApiGatewayWithData(t, dbs, conf)
-
-		var sessionCount int64
-		helpers.CountClientSessions(t, dbs.ApiGateway, &sessionCount)
-		require.EqualValues(t, 4, sessionCount)
+		user := setup.SetUpApiGatewayWithData(t, dbs)
+		validTokens := setup.CreateValidTestClientSessions(&user, t, dbs, conf)
 
 		testRetrieveUserSuccess(
-			t, app, utils.RetrieveUser, user.Slug, user.Name, "Token " + validSessionTokens[0],
+			t, app, utils.RetrieveUser, user.Slug, user.Name, "Token " + validTokens[0],
 		)
-
-		helpers.CountClientSessions(t, dbs.ApiGateway, &sessionCount)
-		require.EqualValues(t, 2, sessionCount)
 	})
 }
 
@@ -99,6 +94,8 @@ func testRetrieveUserSuccess(
 
 		require.Equal(t, slug, user.Slug)
 		require.Equal(t, name, user.Name)
+		require.True(t, user.EmailIsVerified)
+		require.True(t, user.PhoneIsVerified)
 	}
 }
 

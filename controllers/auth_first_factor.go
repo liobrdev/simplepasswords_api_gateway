@@ -121,6 +121,7 @@ func (H Handler) AuthFirstFactor(c *fiber.Ctx) error {
 		UserSlug:  user.Slug,
 		KeyDigest: utils.HashToken(mfaTokenString),
 		OTPDigest: utils.HashToken(strings.Join(oneTimePasscode, "")),
+		TokenKey:  mfaTokenString[:16],
 		CreatedAt: now,
 		ExpiresAt: now.Add(time.Duration(5) * time.Minute),
 	}); result.Error != nil {
@@ -141,7 +142,7 @@ func (H Handler) AuthFirstFactor(c *fiber.Ctx) error {
 		H.logger(c, utils.AuthFirstFactor, err.Error(), "", "error", "Failed send sms otp")
 
 		if result := H.DBs.ApiGateway.Exec(
-			"DELETE FROM mfa_tokens WHERE key_digest = ?", utils.HashToken(mfaTokenString),
+			"DELETE FROM mfa_tokens WHERE token_key = ?", mfaTokenString[:16],
 		); result.Error != nil {
 			H.logger(
 				c, utils.AuthFirstFactor, result.Error.Error(), "", "error", "Failed delete mfa token",

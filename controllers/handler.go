@@ -1,10 +1,13 @@
 package controllers
 
 import (
+	"bytes"
+	"net/smtp"
 	"runtime"
 	"strconv"
+	"strings"
+	"text/template"
 
-	"github.com/goccy/go-json"
 	"github.com/gofiber/fiber/v2"
 	"github.com/twilio/twilio-go"
 	twilioApi "github.com/twilio/twilio-go/rest/api/v2010"
@@ -17,28 +20,6 @@ import (
 type Handler struct {
 	DBs  *databases.Databases
 	Conf *config.AppConfig
-}
-
-func checkVaultsResponse(agent *fiber.Agent) (statusCode int, body, errString string) {
-	statusCode, body, errs := agent.String()
-
-	if len(errs) > 0 {
-		for _, err := range errs {
-			errString += err.Error() + ";;"
-		}
-
-		if body != "" {
-			errString += body + ";;"
-		}
-	}
-
-	if statusCode != 200 && statusCode != 201 && statusCode != 204 {
-		if body != "" {
-			errString += body + ";;"
-		}
-	}
-
-	return statusCode, body, errString
 }
 
 func (H Handler) createLog(
@@ -85,15 +66,41 @@ func (H Handler) sendSMS(phoneNumber, messageBody string) error {
 	params.SetTo(phoneNumber)
 	params.SetBody(messageBody)
 
-	if resp, err := client.Api.CreateMessage(params); err != nil {
+	if _, err := client.Api.CreateMessage(params); err != nil {
 		return err
-	} else if response, err := json.Marshal(resp); err != nil {
-		return err
-	} else {
-		if H.Conf.GO_TESTING_CONTEXT != nil {
-			H.Conf.GO_TESTING_CONTEXT.Log("\n\nResponse:\n" + string(response) + "\n\n")
-		}
-
-		return nil
 	}
+
+	return nil
+}
+
+func (H Handler) sendEmail(
+	subject, from string, to []string, templateFile string, data map[string]string,
+) error {
+	auth := smtp.PlainAuth("", H.Conf.AWS_SES_KEY, H.Conf.AWS_SES_PASSWORD, H.Conf.EMAIL_HOST)
+
+	var t *template.Template
+	var err error
+
+	if t, err = template.ParseFiles(templateFile); err != nil {
+		return err
+	}
+
+	var body bytes.Buffer
+
+	if _, err = body.Write([]byte(
+		"From: " + from + "\r\n" +
+		"To: " + strings.Join(to, ", ") + "\r\n" +
+		"Subject: " + subject + "\r\n" +
+		"Content-Type: text/html; charset=utf-8" + "\r\n\r\n",
+	)); err != nil {
+		return err
+	}
+
+	t.Execute(&body, data)
+
+	if _, err = body.Write([]byte("\r\n")); err != nil {
+		return err
+	}
+
+	return smtp.SendMail(H.Conf.EMAIL_HOST + ":" + H.Conf.EMAIL_PORT, auth, from, to, body.Bytes())
 }

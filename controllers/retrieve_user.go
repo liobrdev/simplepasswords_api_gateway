@@ -23,5 +23,10 @@ func (H Handler) RetrieveUser(c *fiber.Ctx) error {
 		return utils.RespondWithError(c, 500, utils.ErrorServer, nil, nil)
 	}
 
-	return c.Status(200).JSON(&models.User{ Slug: session.UserSlug, Name: session.User.Name })
+	return c.Status(200).JSON(&models.User{
+		Slug: session.UserSlug,
+		Name: session.User.Name,
+		EmailIsVerified: session.User.EmailIsVerified,
+		PhoneIsVerified: session.User.PhoneIsVerified,
+	})
 }

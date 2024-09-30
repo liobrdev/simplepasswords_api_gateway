@@ -49,9 +49,8 @@ func (H Handler) AuthSecondFactor(c *fiber.Ctx) error {
 	}
 
 	var mfaToken models.MFAToken
-	keyDigest := utils.HashToken(body.MFAToken)
 
-	if result := H.DBs.ApiGateway.Preload("User").Where("key_digest = ?", keyDigest).Limit(1).
+	if result := H.DBs.ApiGateway.Preload("User").Where("token_key = ?", body.MFAToken[:16]).Limit(1).
 	Find(&mfaToken); result.Error != nil {
 		H.logger(c, utils.AuthSecondFactor, result.Error.Error(), "", "error", utils.ErrorFailedDB)
 
@@ -107,6 +106,11 @@ func (H Handler) AuthSecondFactor(c *fiber.Ctx) error {
 
 	return c.Status(fiber.StatusOK).JSON(&AuthSecondFactorResponseBody{
 		Token: sessionToken,
-		User:	 models.User{ Slug: mfaToken.User.Slug, Name: mfaToken.User.Name },
+		User:	 models.User{
+			Slug: mfaToken.User.Slug,
+			Name: mfaToken.User.Name,
+			EmailIsVerified: mfaToken.User.EmailIsVerified,
+			PhoneIsVerified: mfaToken.User.PhoneIsVerified,
+		},
 	})
 }

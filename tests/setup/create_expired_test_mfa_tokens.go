@@ -11,7 +11,7 @@ import (
 	"github.com/liobrdev/simplepasswords_api_gateway/utils"
 )
 
-func createExpiredTestMFATokens(
+func CreateExpiredTestMFATokens(
 	user *models.User, t *testing.T, dbs *databases.Databases,
 ) (tokens []controllers.AuthSecondFactorRequestBody) {
 
@@ -31,7 +31,8 @@ func createExpiredTestMFATokens(
 				UserSlug:  user.Slug,
 				KeyDigest: utils.HashToken(mfaTokenString),
 				OTPDigest: utils.HashToken(strings.Join(oneTimePasscode, "")),
-				CreatedAt: now.Add(time.Duration(15) * -time.Minute),
+				TokenKey:  mfaTokenString[:16],
+				CreatedAt: now.Add(time.Duration(6) * -time.Minute),
 				ExpiresAt: now.Add(time.Duration(1) * -time.Minute),
 			})
 

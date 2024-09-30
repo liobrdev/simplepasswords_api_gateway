@@ -461,16 +461,24 @@ func testCreateAccount(
 		)
 	})
 
-	t.Run("valid_body_user_already_exists_500_error", func(t *testing.T) {
+	t.Run("valid_body_email_already_exists_400_error", func(t *testing.T) {
 		setup.SetUpLogger(t, dbs)
-		setup.SetUpApiGatewayWithData(t, dbs, conf)
+		setup.SetUpApiGatewayWithData(t, dbs)
 
 		body := fmt.Sprintf(
-			bodyFmt, helpers.VALID_NAME_1, helpers.VALID_EMAIL_1, helpers.VALID_PHONE_1, helpers.HexHash1,
+			bodyFmt, helpers.VALID_NAME_1, helpers.VALID_EMAIL_1, helpers.VALID_PHONE_2, helpers.HexHash1,
 		)
 
 		testCreateAccountClientError(
-			t, app, dbs, utils.CreateAccount, body, 500, utils.ErrorServer, nil, nil, nil,
+			t, app, dbs, utils.CreateAccount, body, 400, utils.ErrorDiffEmail, nil, nil, nil,
+		)
+
+		body = fmt.Sprintf(
+			bodyFmt, helpers.VALID_NAME_1, helpers.VALID_EMAIL_2, helpers.VALID_PHONE_1, helpers.HexHash2,
+		)
+
+		testCreateAccountClientError(
+			t, app, dbs, utils.CreateAccount, body, 400, utils.ErrorDiffEmail, nil, nil, nil,
 		)
 
 		var logCount int64
@@ -556,6 +564,8 @@ func testCreateAccountSuccess(
 		helpers.QueryTestUserByEmail(t, dbs.ApiGateway, &user, email)
 		require.Equal(t, user.Slug, createAcctRespBody.User.Slug)
 		require.Equal(t, user.Name, createAcctRespBody.User.Name)
+		require.False(t, createAcctRespBody.User.EmailIsVerified)
+		require.False(t, createAcctRespBody.User.PhoneIsVerified)
 
 		var session models.ClientSession
 		helpers.QueryTestClientSessionLatest(t, dbs.ApiGateway, &session)

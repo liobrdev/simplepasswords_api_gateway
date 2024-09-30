@@ -12,5 +12,5 @@ var (
 	RowsRegexp       			 = regexp.MustCompile(`^result.RowsAffected \([0-9]+\) > 1$`)
 	AuthHeaderRegexp 			 = regexp.MustCompile(`^[Tt]oken [\w-]{80}$`)
 	TokenNullRegexp  			 = regexp.MustCompile(`^[Tt]oken (null)?$`)
-	UniqueConstraintRegexp = regexp.MustCompile(`^(UNIQUE constraint failed: users\.(email_address|phone_number)|ERROR: duplicate key value violates unique constraint "users_(email_address|phone_number)_key" \(SQLSTATE 23505\))$`)
+	UniqueConstraintRegexp = regexp.MustCompile(`(UNIQUE constraint failed: users\.(email_address|phone_number)|ERROR: duplicate key value violates unique constraint "users_(email_address|phone_number)_key")`)
 )

@@ -147,7 +147,8 @@ func testAuthorizeRequest(
 	})
 
 	t.Run("valid_token_ip_mismatch_401_unauthorized", func(t *testing.T) {
-		_, validTokens, _, _, _ := setup.SetUpApiGatewayWithData(t, dbs, conf)
+		user := setup.SetUpApiGatewayWithData(t, dbs)
+		validTokens := setup.CreateValidTestClientSessions(&user, t, dbs, conf)
 
 		testAuthorizeRequestClientError(
 			t, app, dbs, "Token " + validTokens[1], 401, utils.ErrorToken, nil, nil, &models.Log{
@@ -162,19 +163,20 @@ func testAuthorizeRequest(
 	})
 
 	t.Run("valid_token_expired_401_unauthorized", func(t *testing.T) {
-		_, _, expiredTokens, _, _ := setup.SetUpApiGatewayWithData(t, dbs, conf)
+		user := setup.SetUpApiGatewayWithData(t, dbs)
+		expiredTokens := setup.CreateExpiredTestClientSessions(&user, t, dbs, conf)
 		setup.SetUpLogger(t, dbs)
 
 		var sessionCount int64
 		helpers.CountClientSessions(t, dbs.ApiGateway, &sessionCount)
-		require.EqualValues(t, 4, sessionCount)
+		require.EqualValues(t, 2, sessionCount)
 
 		testAuthorizeRequestClientError(
 			t, app, dbs, "Token " + expiredTokens[0], 401, utils.ErrorToken, nil, nil, nil,
 		)
 
 		helpers.CountClientSessions(t, dbs.ApiGateway, &sessionCount)
-		require.EqualValues(t, 2, sessionCount)
+		require.EqualValues(t, 0, sessionCount)
 
 		var logCount int64
 		helpers.CountLogs(t, dbs.Logger, &logCount)
@@ -182,7 +184,9 @@ func testAuthorizeRequest(
 	})
 
 	t.Run("valid_slug_204_no_content", func(t *testing.T) {
-		_, validTokens, _, _, _ := setup.SetUpApiGatewayWithData(t, dbs, conf)
+		user := setup.SetUpApiGatewayWithData(t, dbs)
+		validTokens := setup.CreateValidTestClientSessions(&user, t, dbs, conf)
+		setup.CreateExpiredTestClientSessions(&user, t, dbs, conf)
 
 		var sessionCount int64
 		helpers.CountClientSessions(t, dbs.ApiGateway, &sessionCount)

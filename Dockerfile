@@ -11,3 +11,4 @@ WORKDIR /app
 RUN addgroup -g 1001 app_user
 RUN adduser -S -u 1001 -G app_user app_user
 COPY --from=build --chown=app_user:app_user --chmod=500 /app/simplepasswords_api_gateway .
+COPY --from=build --chown=app_user:app_user --chmod=400 /app/templates/email_verify_email.html .

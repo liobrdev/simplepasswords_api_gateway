@@ -12,7 +12,7 @@ import (
 	"github.com/liobrdev/simplepasswords_api_gateway/utils"
 )
 
-func createValidTestClientSessions(
+func CreateValidTestClientSessions(
 	user *models.User, t *testing.T, dbs *databases.Databases, conf *config.AppConfig,
 ) (tokens []string) {
 
@@ -36,8 +36,8 @@ func createValidTestClientSessions(
 				ClientIP:  clientIP,
 				Digest:    utils.HashToken(token),
 				TokenKey:  token[:16],
-				CreatedAt: now,
-				ExpiresAt: now.Add(time.Duration(15) * time.Minute),
+				CreatedAt: now.Add(time.Duration(1) * -time.Minute),
+				ExpiresAt: now.Add(time.Duration(14) * time.Minute),
 			})
 
 			tokens = append(tokens, token)

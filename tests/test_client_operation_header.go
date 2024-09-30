@@ -30,32 +30,37 @@ func testClientOperationHeader(
 	dummySlug := helpers.NewSlug(t)
 	
 	clientOperations := map[string][]string{
-		"create_account":			{"POST", "/api/auth/create_account"},
-		"auth_first_factor":	{"POST", "/api/auth/first_factor"},
-		"auth_second_factor":	{"POST", "/api/auth/second_factor"},
-		"logout_account":			{"POST", "/api/auth/logout_account"},
-		"retrieve_user":			{"GET", "/api/users"},
-		"create_vault":				{"POST", "/api/vaults"},
-		"list_vaults":				{"GET", "/api/vaults"},
-		"retrieve_vault":			{"GET", "/api/vaults/" + dummySlug},
-		"update_vault":				{"PATCH", "/api/vaults/" + dummySlug},
-		"delete_vault":				{"DELETE", "/api/vaults/" + dummySlug},
-		"create_entry":				{"POST", "/api/entries"},
-		"retrieve_entry":			{"GET", "/api/entries/" + dummySlug},
-		"update_entry":				{"PATCH", "/api/entries/" + dummySlug},
-		"delete_entry":				{"DELETE", "/api/entries/" + dummySlug},
-		"create_secret":			{"POST", "/api/secrets"},
-		"update_secret":			{"PATCH", "/api/secrets/" + dummySlug},
-		"delete_secret":			{"DELETE", "/api/secrets/" + dummySlug},
+		"create_account":				{"POST", "/api/auth/create_account"},
+		"auth_first_factor":		{"POST", "/api/auth/first_factor"},
+		"auth_second_factor":		{"POST", "/api/auth/second_factor"},
+		"logout_account":				{"POST", "/api/auth/logout_account"},
+		"verify_email_try":			{"POST", "/api/auth/verify_email_try"},
+		"verify_email_confirm":	{"POST", "/api/auth/verify_email_confirm"},
+		"verify_phone_try":			{"POST", "/api/auth/verify_phone_try"},
+		"verify_phone_confirm":	{"POST", "/api/auth/verify_phone_confirm"},
+		"retrieve_user":				{"GET", "/api/users"},
+		"create_vault":					{"POST", "/api/vaults"},
+		"list_vaults":					{"GET", "/api/vaults"},
+		"retrieve_vault":				{"GET", "/api/vaults/" + dummySlug},
+		"update_vault":					{"PATCH", "/api/vaults/" + dummySlug},
+		"delete_vault":					{"DELETE", "/api/vaults/" + dummySlug},
+		"create_entry":					{"POST", "/api/entries"},
+		"retrieve_entry":				{"GET", "/api/entries/" + dummySlug},
+		"update_entry":					{"PATCH", "/api/entries/" + dummySlug},
+		"delete_entry":					{"DELETE", "/api/entries/" + dummySlug},
+		"create_secret":				{"POST", "/api/secrets"},
+		"update_secret":				{"PATCH", "/api/secrets/" + dummySlug},
+		"delete_secret":				{"DELETE", "/api/secrets/" + dummySlug},
 	}
 
 	setup.SetUpLogger(t, dbs)
-	_, validSessionTokens, _, _, _ := setup.SetUpApiGatewayWithData(t, dbs, conf)
+	user := setup.SetUpApiGatewayWithData(t, dbs)
+	validTokens := setup.CreateValidTestClientSessions(&user, t, dbs, conf)
 
 	for operation, route := range clientOperations {
 		t.Run("wrong_client_operation_" + operation + "_400_bad_request", func(t *testing.T) {
 			testClientOperationHeaderError(
-				t, app, dbs, conf, route[0], route[1], "Token " + validSessionTokens[0], "wrong_operation",
+				t, app, dbs, conf, route[0], route[1], "Token " + validTokens[0], "wrong_operation",
 				400, utils.ErrorBadRequest, nil, nil, &models.Log{
 					ClientIP:        clientIP,
 					ClientOperation: operation,

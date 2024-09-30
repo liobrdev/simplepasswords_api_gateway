@@ -118,9 +118,11 @@ func (H Handler) CreateAccount(c *fiber.Ctx) error {
 
 		return nil
 	}); err != nil {
-		if !utils.UniqueConstraintRegexp.Match([]byte(err.Error())) {
-			H.logger(c, utils.CreateAccount, err.Error(), "", "error", utils.ErrorCreateUser)
+		if utils.UniqueConstraintRegexp.Match([]byte(err.Error())) {
+			return utils.RespondWithError(c, 400, utils.ErrorDiffEmail, nil, nil)
 		}
+
+		H.logger(c, utils.CreateAccount, err.Error(), "", "error", utils.ErrorCreateUser)
 
 		return utils.RespondWithError(c, 500, utils.ErrorServer, nil, nil)
 	}
@@ -135,7 +137,12 @@ func (H Handler) CreateAccount(c *fiber.Ctx) error {
 
 	return c.Status(fiber.StatusCreated).JSON(&CreateAccountResponseBody{
 		Token: sessionToken,
-		User:	 models.User{ Slug: user.Slug, Name: user.Name },
+		User:	 models.User{
+			Slug: user.Slug,
+			Name: user.Name,
+			EmailIsVerified: user.EmailIsVerified,
+			PhoneIsVerified: user.PhoneIsVerified,
+		},
 	})
 }
 

@@ -29,3 +29,9 @@ func CountMFATokens(t *testing.T, db *gorm.DB, mfaTokenCount *int64) {
 		t.Fatalf("MFA token count failed: %s", result.Error.Error())
 	}
 }
+
+func CountEmailTokens(t *testing.T, db *gorm.DB, emailTokenCount *int64) {
+	if result := db.Table("email_verification_tokens").Count(emailTokenCount); result.Error != nil {
+		t.Fatalf("Email token count failed: %s", result.Error.Error())
+	}
+}

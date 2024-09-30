@@ -24,9 +24,15 @@ func Register(app *fiber.App, dbs *databases.Databases, conf *config.AppConfig) 
 	}
 
 	authApi.Post("/logout_account", H.LogoutAccount)
+	authApi.Post("/verify_email_try", H.VerifyEmailTry)
+	authApi.Post("/verify_email_confirm", H.VerifyEmailConfirm)
+	authApi.Post("/verify_phone_try", H.VerifyPhoneTry)
+	authApi.Post("/verify_phone_confirm", H.VerifyPhoneConfirm)
 
 	usersApi := api.Group("/users")
 	usersApi.Get("/", H.RetrieveUser)
+
+	app.Use(H.CheckUserIsVerified)
 
 	vaultsApi := api.Group("/vaults")
 	vaultsApi.Post("/", H.VaultsCreateVault)

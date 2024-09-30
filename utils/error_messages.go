@@ -30,4 +30,5 @@ const (
 	ErrorBadClient						string = "Client did something it shouldn't have."
 	ErrorParams								string = "Invalid URL parameters."
 	ErrorUserContext					string = "Invalid user context."
+	ErrorAlreadyVerified			string = "User already verified"
 )

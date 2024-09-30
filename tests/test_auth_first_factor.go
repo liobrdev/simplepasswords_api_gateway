@@ -268,7 +268,7 @@ func testAuthFirstFactor(
 
 	t.Run("valid_body_failed_login_400_bad_request", func(t *testing.T) {
 		setup.SetUpLogger(t, dbs)
-		setup.SetUpApiGatewayWithData(t, dbs, conf)
+		setup.SetUpApiGatewayWithData(t, dbs)
 
 		body := fmt.Sprintf(bodyFmt, helpers.VALID_EMAIL_2, helpers.HexHash2 + "abc123")
 		testAuthFirstFactorClientError(
@@ -287,14 +287,14 @@ func testAuthFirstFactor(
 
 	t.Run("valid_body_200_ok", func(t *testing.T) {
 		body := fmt.Sprintf(bodyFmt, helpers.VALID_EMAIL_1, helpers.HexHash1)
-		testAuthFirstFactorSuccess(t, app, dbs, utils.AuthFirstFactor, body, conf)
+		testAuthFirstFactorSuccess(t, app, dbs, utils.AuthFirstFactor, body)
 	})
 
 	t.Run("valid_body_irrelevant_data_200_ok", func(t *testing.T) {
 		validBodyIrrelevantData := fmt.Sprintf(
 			`{"email":"%s","password":"%s","abc":123}`, helpers.VALID_EMAIL_1, helpers.HexHash1,
 		)
-		testAuthFirstFactorSuccess(t, app, dbs, utils.AuthFirstFactor, validBodyIrrelevantData, conf)
+		testAuthFirstFactorSuccess(t, app, dbs, utils.AuthFirstFactor, validBodyIrrelevantData)
 	})
 }
 
@@ -321,9 +321,10 @@ func testAuthFirstFactorClientError(
 
 func testAuthFirstFactorSuccess(
 	t *testing.T, app *fiber.App, dbs *databases.Databases, clientOperation, body string,
-	conf *config.AppConfig,
 ) {
-	setup.SetUpApiGatewayWithData(t, dbs, conf)
+	user := setup.SetUpApiGatewayWithData(t, dbs)
+	setup.CreateValidTestMFATokens(&user, t, dbs)
+	setup.CreateExpiredTestMFATokens(&user, t, dbs)
 
 	var mfaTokenCount int64
 	helpers.CountMFATokens(t, dbs.ApiGateway, &mfaTokenCount)
@@ -348,7 +349,7 @@ func testAuthFirstFactorSuccess(
 
 		var mfaToken models.MFAToken
 		helpers.QueryTestMFATokenLatest(t, dbs.ApiGateway, &mfaToken)
-		require.Equal(t, mfaToken.KeyDigest, utils.HashToken(authFirstFactorRespBody.MFAToken))
+		require.Equal(t, mfaToken.TokenKey, authFirstFactorRespBody.MFAToken[:16])
 		require.Equal(t, mfaToken.OTPDigest, utils.HashToken(authFirstFactorRespBody.TestOTP))
 	}
 }

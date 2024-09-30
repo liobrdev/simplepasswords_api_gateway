@@ -17,12 +17,14 @@ func createTestUser(t *testing.T, dbs *databases.Databases) models.User {
 		panic(err)
 	} else {
 		user := models.User{
-			Slug:         helpers.NewSlug(t),
-			Name:         helpers.VALID_NAME_1,
-			EmailAddress: helpers.VALID_EMAIL_1,
-			PhoneNumber: 	helpers.VALID_PHONE_1,
-			PasswordHash: hash,
-			PasswordSalt: salt,
+			Slug:        		 helpers.NewSlug(t),
+			Name:        		 helpers.VALID_NAME_1,
+			EmailAddress:		 helpers.VALID_EMAIL_1,
+			PhoneNumber: 		 helpers.VALID_PHONE_1,
+			PasswordHash:		 hash,
+			PasswordSalt:		 salt,
+			EmailIsVerified: true,
+			PhoneIsVerified: true,
 		}
 
 		if result := dbs.ApiGateway.Create(&user); result.Error != nil {

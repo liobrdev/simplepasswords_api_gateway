@@ -1,12 +1,16 @@
 package utils
 
 const (
-	AuthFirstFactor	 string = "auth_first_factor"
-	AuthSecondFactor string = "auth_second_factor"
-	CreateAccount		 string = "create_account"
-	LogoutAccount		 string = "logout_account"
-	TestAuthReq			 string = "test_auth_req"
-	RetrieveUser		 string = "retrieve_user"
+	AuthFirstFactor		 string = "auth_first_factor"
+	AuthSecondFactor	 string = "auth_second_factor"
+	CreateAccount			 string = "create_account"
+	LogoutAccount			 string = "logout_account"
+	TestAuthReq				 string = "test_auth_req"
+	RetrieveUser			 string = "retrieve_user"
+	VerifyEmailTry		 string = "verify_email_try"
+	VerifyEmailConfirm string = "verify_email_confirm"
+	VerifyPhoneTry		 string = "verify_phone_try"
+	VerifyPhoneConfirm string = "verify_phone_confirm"
 
 	// vaults
 	CreateUser    string = "create_user"

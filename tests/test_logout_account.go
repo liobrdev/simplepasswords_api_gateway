@@ -22,11 +22,12 @@ func testLogoutAccount(
 	t *testing.T, app *fiber.App, dbs *databases.Databases, conf *config.AppConfig,
 ) {
 	t.Run("valid_logout_204_no_content", func(t *testing.T) {
-		_, validTokens, _, _, _ := setup.SetUpApiGatewayWithData(t, dbs, conf)
+		user := setup.SetUpApiGatewayWithData(t, dbs)
+		validTokens := setup.CreateValidTestClientSessions(&user, t, dbs, conf)
 
 		var sessionCount int64
 		helpers.CountClientSessions(t, dbs.ApiGateway, &sessionCount)
-		require.EqualValues(t, 4, sessionCount)
+		require.EqualValues(t, 2, sessionCount)
 
 		resp := newRequestLogoutAccount(t, app, "Token " + validTokens[0])
 		require.Equal(t, http.StatusNoContent, resp.StatusCode)

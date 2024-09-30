@@ -12,62 +12,76 @@ import (
 )
 
 type AppConfig struct {
-	API_GATEWAY_DB_HOST			string
-	API_GATEWAY_DB_NAME			string
-	API_GATEWAY_DB_PASSWORD	string
-	API_GATEWAY_DB_PORT			string
-	API_GATEWAY_DB_USER			string
-	API_GATEWAY_HOST				string
-	API_GATEWAY_PORT				string
-	BEHIND_PROXY						bool
-	ENVIRONMENT							string
-	LOGGER_DB_HOST					string
-	LOGGER_DB_NAME					string
-	LOGGER_DB_PASSWORD			string
-	LOGGER_DB_PORT					string
-	LOGGER_DB_USER					string
-	PASSWORD_HEADER_KEY			string
-	PROXY_IP_ADDRESSES			[]string
-	REDIS_PASSWORD					string
-	SECRET_KEY							string
-	TWILIO_ACCOUNT_SID			string
-	TWILIO_AUTH_TOKEN				string
-	TWILIO_PHONE_NUMBER			string
-	VAULTS_ACCESS_TOKEN			string
-	VAULTS_HOST							string
-	VAULTS_PORT							string
-	GO_TESTING_CONTEXT			*testing.T
+	API_GATEWAY_DB_HOST     string
+	API_GATEWAY_DB_NAME     string
+	API_GATEWAY_DB_PASSWORD string
+	API_GATEWAY_DB_PORT     string
+	API_GATEWAY_DB_USER     string
+	API_GATEWAY_HOST        string
+	API_GATEWAY_PORT        string
+	APP_DOMAIN              string
+	APP_SCHEME              string
+	AWS_SES_KEY             string
+	AWS_SES_PASSWORD        string
+	BEHIND_PROXY            bool
+	EMAIL_HOST              string
+	EMAIL_PORT              string
+	ENVIRONMENT             string
+	LOGGER_DB_HOST          string
+	LOGGER_DB_NAME          string
+	LOGGER_DB_PASSWORD      string
+	LOGGER_DB_PORT          string
+	LOGGER_DB_USER          string
+	PASSWORD_HEADER_KEY     string
+	PROXY_IP_ADDRESSES      []string
+	REDIS_PASSWORD          string
+	SECRET_KEY              string
+	SUPPORT_EMAIL						string
+	TWILIO_ACCOUNT_SID      string
+	TWILIO_AUTH_TOKEN       string
+	TWILIO_PHONE_NUMBER     string
+	VAULTS_ACCESS_TOKEN     string
+	VAULTS_HOST             string
+	VAULTS_PORT             string
+	GO_TESTING_CONTEXT      *testing.T
 }
 
 type envAbsPaths struct {
-	API_GATEWAY_DB_HOST			string
-	API_GATEWAY_DB_NAME			string
-	API_GATEWAY_DB_PASSWORD	string
-	API_GATEWAY_DB_PORT			string
-	API_GATEWAY_DB_USER			string
-	API_GATEWAY_HOST				string
-	API_GATEWAY_PORT				string
-	BEHIND_PROXY						string
-	ENVIRONMENT							string
-	LOGGER_DB_HOST					string
-	LOGGER_DB_NAME					string
-	LOGGER_DB_PASSWORD			string
-	LOGGER_DB_PORT					string
-	LOGGER_DB_USER					string
-	PASSWORD_HEADER_KEY			string
-	PROXY_IP_ADDRESSES			string
-	REDIS_PASSWORD					string
-	SECRET_KEY							string
-	TWILIO_ACCOUNT_SID			string
-	TWILIO_AUTH_TOKEN				string
-	TWILIO_PHONE_NUMBER			string
-	VAULTS_ACCESS_TOKEN			string
-	VAULTS_HOST							string
-	VAULTS_PORT							string
+	API_GATEWAY_DB_HOST     string
+	API_GATEWAY_DB_NAME     string
+	API_GATEWAY_DB_PASSWORD string
+	API_GATEWAY_DB_PORT     string
+	API_GATEWAY_DB_USER     string
+	API_GATEWAY_HOST        string
+	API_GATEWAY_PORT        string
+	APP_DOMAIN              string
+	APP_SCHEME              string
+	AWS_SES_KEY             string
+	AWS_SES_PASSWORD        string
+	BEHIND_PROXY            string
+	EMAIL_HOST              string
+	EMAIL_PORT              string
+	ENVIRONMENT             string
+	LOGGER_DB_HOST          string
+	LOGGER_DB_NAME          string
+	LOGGER_DB_PASSWORD      string
+	LOGGER_DB_PORT          string
+	LOGGER_DB_USER          string
+	PASSWORD_HEADER_KEY     string
+	PROXY_IP_ADDRESSES      string
+	REDIS_PASSWORD          string
+	SECRET_KEY              string
+	SUPPORT_EMAIL						string
+	TWILIO_ACCOUNT_SID      string
+	TWILIO_AUTH_TOKEN       string
+	TWILIO_PHONE_NUMBER     string
+	VAULTS_ACCESS_TOKEN     string
+	VAULTS_HOST             string
+	VAULTS_PORT             string
 }
 
 func scanFileFirstLineToConf(
-	file *os.File, conf *AppConfig, confElem *reflect.Value, path, fieldName string, 
+	file *os.File, conf *AppConfig, confElem *reflect.Value, path, fieldName string,
 ) {
 	scanner := bufio.NewScanner(file)
 	scanner.Scan()

@@ -12,7 +12,7 @@ import (
 	"github.com/liobrdev/simplepasswords_api_gateway/utils"
 )
 
-func createExpiredTestClientSessions(
+func CreateExpiredTestClientSessions(
 	user *models.User, t *testing.T, dbs *databases.Databases, conf *config.AppConfig,
 ) (tokens []string) {
 
@@ -35,7 +35,7 @@ func createExpiredTestClientSessions(
 				ClientIP:  clientIP,
 				Digest:    utils.HashToken(token),
 				TokenKey:  token[:16],
-				CreatedAt: now.Add(time.Duration(15) * -time.Minute),
+				CreatedAt: now.Add(time.Duration(16) * -time.Minute),
 				ExpiresAt: now.Add(time.Duration(1) * -time.Minute),
 			})
 
