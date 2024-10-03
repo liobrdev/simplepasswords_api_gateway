@@ -43,6 +43,7 @@ func testVerifyEmailTry(
 				ClientOperation: utils.VerifyEmailTry,
 				Level:           "warn",
 				Message:         utils.ErrorAlreadyVerified,
+				UserSlug:				 user.Slug,
 			},
 		)
 	})
@@ -76,6 +77,7 @@ func testVerifyEmailTry(
 				ClientOperation: utils.VerifyEmailTry,
 				Level:           "warn",
 				Message:         "Too soon retry",
+				UserSlug:				 user.Slug,
 			},
 		)
 

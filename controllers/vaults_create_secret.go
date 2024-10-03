@@ -17,7 +17,7 @@ type CreateSecretRequestBody struct {
 
 func (H Handler) VaultsCreateSecret(c *fiber.Ctx) error {
 	if header := c.Get("Client-Operation"); header != utils.CreateSecret {
-		H.logger(c, utils.CreateSecret, header, "", "warn", utils.ErrorClientOperation)
+		H.logger(c, utils.CreateSecret, header, "", "warn", utils.ErrorClientOperation, "")
 
 		return utils.RespondWithError(c, 400, utils.ErrorBadRequest, nil, nil)
 	}
@@ -25,7 +25,7 @@ func (H Handler) VaultsCreateSecret(c *fiber.Ctx) error {
 	reqBody := CreateSecretRequestBody{}
 
 	if err := c.BodyParser(&reqBody); err != nil {
-		H.logger(c, utils.CreateSecret, err.Error(), "", "error", utils.ErrorParse)
+		H.logger(c, utils.CreateSecret, err.Error(), "", "error", utils.ErrorParse, "")
 
 		return utils.RespondWithError(c, 400, utils.ErrorBadRequest, nil, nil)
 	}
@@ -39,7 +39,10 @@ func (H Handler) VaultsCreateSecret(c *fiber.Ctx) error {
 	_, _, errString := checkVaultsResponse(agent)
 
 	if errString != "" {
-		H.logger(c, utils.CreateSecret, errString, "", "error", utils.ErrorVaultsCreateSecret)
+		H.logger(
+			c, utils.CreateSecret, errString, "", "error", utils.ErrorVaultsCreateSecret,
+			reqBody.UserSlug,
+		)
 
 		return utils.RespondWithError(c, 500, utils.ErrorServer, nil, nil)
 	}

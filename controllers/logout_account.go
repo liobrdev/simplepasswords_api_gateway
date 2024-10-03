@@ -11,7 +11,7 @@ import (
 
 func (H Handler) LogoutAccount(c *fiber.Ctx) error {
 	if header := c.Get("Client-Operation"); header != utils.LogoutAccount {
-		H.logger(c, utils.LogoutAccount, header, "", "warn", utils.ErrorClientOperation)
+		H.logger(c, utils.LogoutAccount, header, "", "warn", utils.ErrorClientOperation, "")
 
 		return utils.RespondWithError(c, 400, utils.ErrorBadRequest, nil, nil)
 	}
@@ -20,19 +20,22 @@ func (H Handler) LogoutAccount(c *fiber.Ctx) error {
 	var ok bool
 
 	if session, ok = c.UserContext().Value(sessionContextKey{}).(*models.ClientSession); !ok {
-		H.logger(c, utils.LogoutAccount, "", "", "error", "Failed session.User context")
+		H.logger(c, utils.LogoutAccount, "", "", "error", "Failed session.User context", "")
 
 		return utils.RespondWithError(c, 500, utils.ErrorServer, nil, nil)
 	}
 
 	if result := H.DBs.ApiGateway.Delete(&session); result.Error != nil {
-		H.logger(c, utils.LogoutAccount, result.Error.Error(), "", "error", utils.ErrorFailedDB)
+		H.logger(
+			c, utils.LogoutAccount, result.Error.Error(), "", "error", utils.ErrorFailedDB,
+			session.UserSlug,
+		)
 
 		return utils.RespondWithError(c, 500, utils.ErrorServer, nil, nil)
 	} else if n := result.RowsAffected; n != 1 {
 		H.logger(
 			c, utils.LogoutAccount, "result.RowsAffected != 1", strconv.FormatInt(n, 10),
-			"error", utils.ErrorFailedDB,
+			"error", utils.ErrorFailedDB, session.UserSlug,
 		)
 
 		return utils.RespondWithError(c, 500, utils.ErrorServer, nil, nil)

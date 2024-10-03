@@ -8,7 +8,7 @@ import (
 
 func (H Handler) VaultsDeleteSecret(c *fiber.Ctx) error {
 	if header := c.Get("Client-Operation"); header != utils.DeleteSecret {
-		H.logger(c, utils.DeleteSecret, header, "", "warn", utils.ErrorClientOperation)
+		H.logger(c, utils.DeleteSecret, header, "", "warn", utils.ErrorClientOperation, "")
 
 		return utils.RespondWithError(c, 400, utils.ErrorBadRequest, nil, nil)
 	}
@@ -26,7 +26,7 @@ func (H Handler) VaultsDeleteSecret(c *fiber.Ctx) error {
 	_, _, errString := checkVaultsResponse(agent)
 
 	if errString != "" {
-		H.logger(c, utils.DeleteSecret, errString, "", "error", utils.ErrorVaultsDeleteSecret)
+		H.logger(c, utils.DeleteSecret, errString, "", "error", utils.ErrorVaultsDeleteSecret, "")
 
 		return utils.RespondWithError(c, 500, utils.ErrorServer, nil, nil)
 	}

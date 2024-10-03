@@ -158,6 +158,7 @@ func testAuthorizeRequest(
 				Extra:					 clientIP + " != " + helpers.OLD_IP,
 				Level:           "error",
 				Message:         utils.ErrorIPMismatch,
+				UserSlug:				 user.Slug,
 			},
 		)
 	})

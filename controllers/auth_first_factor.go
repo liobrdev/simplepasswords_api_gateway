@@ -24,7 +24,7 @@ type AuthFirstFactorResponseBody struct {
 
 func (H Handler) AuthFirstFactor(c *fiber.Ctx) error {
 	if header := c.Get("Client-Operation"); header != utils.AuthFirstFactor {
-		H.logger(c, utils.AuthFirstFactor, header, "", "warn", utils.ErrorClientOperation)
+		H.logger(c, utils.AuthFirstFactor, header, "", "warn", utils.ErrorClientOperation, "")
 
 		return utils.RespondWithError(c, 400, utils.ErrorBadRequest, nil, nil)
 	}
@@ -32,19 +32,19 @@ func (H Handler) AuthFirstFactor(c *fiber.Ctx) error {
 	body := AuthFirstFactorRequestBody{}
 
 	if err := c.BodyParser(&body); err != nil {
-		H.logger(c, utils.AuthFirstFactor, err.Error(), "", "warn", utils.ErrorParse)
+		H.logger(c, utils.AuthFirstFactor, err.Error(), "", "warn", utils.ErrorParse, "")
 
 		return utils.RespondWithError(c, 400, utils.ErrorBadRequest, nil, nil)
 	}
 
 	if !utils.EmailRegexp.Match([]byte(body.Email)) {
-		H.logger(c, utils.AuthFirstFactor, body.Email, "", "warn", utils.ErrorAcctEmail)
+		H.logger(c, utils.AuthFirstFactor, body.Email, "", "warn", utils.ErrorAcctEmail, "")
 
 		return utils.RespondWithError(c, 400, utils.ErrorFailedLogin, nil, nil)
 	}
 
 	if body.Password == "" {
-		H.logger(c, utils.AuthFirstFactor, "", "", "warn", utils.ErrorAcctPW)
+		H.logger(c, utils.AuthFirstFactor, "", "", "warn", utils.ErrorAcctPW, "")
 
 		return utils.RespondWithError(c, 400, utils.ErrorFailedLogin, nil, nil)
 	}
@@ -53,7 +53,7 @@ func (H Handler) AuthFirstFactor(c *fiber.Ctx) error {
 
 	if result := H.DBs.ApiGateway.Where("email_address = ?", body.Email).Limit(1).Find(&user);
 	result.Error != nil {
-		H.logger(c, utils.AuthFirstFactor, result.Error.Error(), "", "error", utils.ErrorFailedDB)
+		H.logger(c, utils.AuthFirstFactor, result.Error.Error(), "", "error", utils.ErrorFailedDB, "")
 
 		return utils.RespondWithError(c, 400, utils.ErrorFailedLogin, nil, nil)
 	} else if n := result.RowsAffected; n == 0 {
@@ -61,7 +61,7 @@ func (H Handler) AuthFirstFactor(c *fiber.Ctx) error {
 	} else if n != 1 {
 		H.logger(
 			c, utils.AuthFirstFactor, "result.RowsAffected != 1", strconv.FormatInt(n, 10), "error",
-			utils.ErrorFailedDB,
+			utils.ErrorFailedDB, "",
 		)
 
 		return utils.RespondWithError(c, 400, utils.ErrorFailedLogin, nil, nil)
@@ -72,7 +72,7 @@ func (H Handler) AuthFirstFactor(c *fiber.Ctx) error {
 	}
 
 	if password, err := hex.DecodeString(body.Password); err != nil {
-		H.logger(c, utils.AuthFirstFactor, err.Error(), "", "error", utils.ErrorAcctPW)
+		H.logger(c, utils.AuthFirstFactor, err.Error(), "", "error", utils.ErrorAcctPW, user.Slug)
 
 		return utils.RespondWithError(c, 400, utils.ErrorBadRequest, nil, nil)
 	} else if !utils.CompareHashAndPassword(user.PasswordHash, password, user.PasswordSalt) {
@@ -84,7 +84,9 @@ func (H Handler) AuthFirstFactor(c *fiber.Ctx) error {
 	// Get all user's MFA tokens for cleanup
 	if result := H.DBs.ApiGateway.Where("user_slug = ?", user.Slug).Find(&userAllMFATokens);
 	result.Error != nil {
-		H.logger(c, utils.AuthFirstFactor, result.Error.Error(), "", "error", utils.ErrorFailedDB)
+		H.logger(
+			c, utils.AuthFirstFactor, result.Error.Error(), "", "error", utils.ErrorFailedDB, user.Slug,
+		)
 	}
 
 	now := time.Now().UTC()
@@ -95,11 +97,12 @@ func (H Handler) AuthFirstFactor(c *fiber.Ctx) error {
 			if result := H.DBs.ApiGateway.Delete(&token); result.Error != nil {
 				H.logger(
 					c, utils.AuthFirstFactor, result.Error.Error(), "", "error", utils.ErrorFailedDB,
+					user.Slug,
 				)
 			} else if n := result.RowsAffected; n != 1 {
 				H.logger(
 					c, utils.AuthFirstFactor, "result.RowsAffected != 1", strconv.FormatInt(n, 10),
-					"error", utils.ErrorFailedDB,
+					"error", utils.ErrorFailedDB, user.Slug,
 				)
 			}
 		}
@@ -110,11 +113,13 @@ func (H Handler) AuthFirstFactor(c *fiber.Ctx) error {
 	var err error
 
 	if mfaTokenString, err = utils.GenerateSlug(80); err != nil {
-		H.logger(c, utils.AuthFirstFactor, err.Error(), "", "error", "Failed generate mfa string")
+		H.logger(
+			c, utils.AuthFirstFactor, err.Error(), "", "error", "Failed generate mfa string", user.Slug,
+		)
 
 		return utils.RespondWithError(c, 500, utils.ErrorServer, nil, nil)
 	} else if oneTimePasscode, err = utils.GenerateOTP(); err != nil {
-		H.logger(c, utils.AuthFirstFactor, err.Error(), "", "error", "Failed generate otp")
+		H.logger(c, utils.AuthFirstFactor, err.Error(), "", "error", "Failed generate otp", user.Slug)
 
 		return utils.RespondWithError(c, 500, utils.ErrorServer, nil, nil)
 	} else if result := H.DBs.ApiGateway.Create(&models.MFAToken{
@@ -127,6 +132,7 @@ func (H Handler) AuthFirstFactor(c *fiber.Ctx) error {
 	}); result.Error != nil {
 		H.logger(
 			c, utils.AuthFirstFactor, result.Error.Error(), "", "error", "Failed create mfa token",
+			user.Slug,
 		)
 
 		return utils.RespondWithError(c, 500, utils.ErrorServer, nil, nil)
@@ -139,13 +145,14 @@ func (H Handler) AuthFirstFactor(c *fiber.Ctx) error {
 	} else if err = H.sendSMS(
 		user.PhoneNumber, "One-time passcode:\n" + strings.Join(oneTimePasscode, " "),
 	); err != nil {
-		H.logger(c, utils.AuthFirstFactor, err.Error(), "", "error", "Failed send sms otp")
+		H.logger(c, utils.AuthFirstFactor, err.Error(), "", "error", "Failed send sms otp", user.Slug)
 
 		if result := H.DBs.ApiGateway.Exec(
 			"DELETE FROM mfa_tokens WHERE token_key = ?", mfaTokenString[:16],
 		); result.Error != nil {
 			H.logger(
 				c, utils.AuthFirstFactor, result.Error.Error(), "", "error", "Failed delete mfa token",
+				user.Slug,
 			)
 		}
 

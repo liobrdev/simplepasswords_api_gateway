@@ -23,7 +23,7 @@ type Handler struct {
 }
 
 func (H Handler) createLog(
-	c *fiber.Ctx, caller, clientOperation, detail, extra, level, message string,
+	c *fiber.Ctx, caller, clientOperation, detail, extra, level, message, userSlug string,
 ) {
 	var clientIP string
 
@@ -43,15 +43,18 @@ func (H Handler) createLog(
 		Level:           level,
 		Message:         message,
 		RequestBody:     string(c.Body()),
+		UserSlug:				 userSlug,
 	})
 }
 
-func (H Handler) logger(c *fiber.Ctx, clientOperation, detail, extra, level, message string) {
+func (H Handler) logger(
+	c *fiber.Ctx, clientOperation, detail, extra, level, message, userSlug string,
+) {
 	_, file, line, _ := runtime.Caller(1)
 
 	H.createLog(
 		c, file + ":" + strconv.FormatInt(int64(line), 10), clientOperation, detail, extra, level,
-		message,
+		message, userSlug,
 	)
 }
 

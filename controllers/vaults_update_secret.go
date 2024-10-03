@@ -19,7 +19,7 @@ func (H Handler) VaultsUpdateSecret(c *fiber.Ctx) error {
 	}
 
 	if clientOperation != utils.UpdateSecret {
-		H.logger(c, utils.UpdateSecret, clientOperation, "", "warn", utils.ErrorClientOperation)
+		H.logger(c, utils.UpdateSecret, clientOperation, "", "warn", utils.ErrorClientOperation, "")
 
 		return utils.RespondWithError(c, 400, utils.ErrorBadRequest, nil, nil)
 	}
@@ -27,7 +27,7 @@ func (H Handler) VaultsUpdateSecret(c *fiber.Ctx) error {
 	reqBody := UpdateSecretRequestBody{}
 
 	if err := c.BodyParser(&reqBody); err != nil {
-		H.logger(c, utils.UpdateSecret, err.Error(), "", "error", utils.ErrorParse)
+		H.logger(c, utils.UpdateSecret, err.Error(), "", "error", utils.ErrorParse, "")
 
 		return utils.RespondWithError(c, 400, utils.ErrorBadRequest, nil, nil)
 	}
@@ -46,7 +46,7 @@ func (H Handler) VaultsUpdateSecret(c *fiber.Ctx) error {
 	_, _, errString := checkVaultsResponse(agent)
 
 	if errString != "" {
-		H.logger(c, utils.UpdateSecret, errString, "", "error", utils.ErrorVaultsUpdateSecret)
+		H.logger(c, utils.UpdateSecret, errString, "", "error", utils.ErrorVaultsUpdateSecret, "")
 
 		return utils.RespondWithError(c, 500, utils.ErrorServer, nil, nil)
 	}

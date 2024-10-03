@@ -38,7 +38,9 @@ func (H Handler) AuthorizeRequest(c *fiber.Ctx) error {
 
 	// Check Authorization header format
 	if !utils.AuthHeaderRegexp.Match([]byte(authHeader)) {
-		H.logger(c, c.Get("Client-Operation"), "Authorization", authHeader, "error", utils.ErrorToken)
+		H.logger(
+			c, c.Get("Client-Operation"), "Authorization", authHeader, "error", utils.ErrorToken, "",
+		)
 
 		return utils.RespondWithError(c, 401, utils.ErrorToken, nil, nil)
 	}
@@ -50,7 +52,9 @@ func (H Handler) AuthorizeRequest(c *fiber.Ctx) error {
 	// Query session from token provided in header
 	if result := H.DBs.ApiGateway.Preload("User").Where("token_key = ?", authToken[:16]).Limit(1).
 	Find(&thisSession); result.Error != nil {
-		H.logger(c, c.Get("Client-Operation"), result.Error.Error(), "", "error", utils.ErrorFailedDB)
+		H.logger(
+			c, c.Get("Client-Operation"), result.Error.Error(), "", "error", utils.ErrorFailedDB, "",
+		)
 
 		return utils.RespondWithError(c, 500, utils.ErrorServer, nil, nil)
 	} else if n := result.RowsAffected; n == 0 {
@@ -59,7 +63,7 @@ func (H Handler) AuthorizeRequest(c *fiber.Ctx) error {
 	} else if n != 1 {
 		H.logger(
 			c, c.Get("Client-Operation"), "result.RowsAffected", strconv.FormatInt(n, 10), "error",
-			utils.ErrorFailedDB,
+			utils.ErrorFailedDB, "",
 		)
 
 		return utils.RespondWithError(c, 500, utils.ErrorServer, nil, nil)
@@ -70,7 +74,7 @@ func (H Handler) AuthorizeRequest(c *fiber.Ctx) error {
 		H.logger(
 			c, c.Get("Client-Operation"), "!thisSession.User.IsActive",
 			"token_key = " + authToken[:16] + " ; user_slug = " + thisSession.UserSlug, "error",
-			utils.ErrorBadClient,
+			utils.ErrorBadClient, thisSession.UserSlug,
 		)
 
 		return utils.RespondWithError(c, 401, utils.ErrorToken, nil, nil)
@@ -80,7 +84,7 @@ func (H Handler) AuthorizeRequest(c *fiber.Ctx) error {
 	if c.IP() != thisSession.ClientIP {
 		H.logger(
 			c, c.Get("Client-Operation"), "c.IP() != thisSession.ClientIP",
-			c.IP() + " != " + thisSession.ClientIP, "error", utils.ErrorIPMismatch,
+			c.IP() + " != " + thisSession.ClientIP, "error", utils.ErrorIPMismatch, thisSession.UserSlug,
 		)
 
 		return utils.RespondWithError(c, 401, utils.ErrorToken, nil, nil)
@@ -91,13 +95,16 @@ func (H Handler) AuthorizeRequest(c *fiber.Ctx) error {
 	// Get all user's sessions for cleanup
 	if result := H.DBs.ApiGateway.Where("user_slug = ?", thisSession.UserSlug).Find(&userAllSessions);
 	result.Error != nil {
-		H.logger(c, c.Get("Client-Operation"), result.Error.Error(), "", "error", utils.ErrorFailedDB)
+		H.logger(
+			c, c.Get("Client-Operation"), result.Error.Error(), "", "error", utils.ErrorFailedDB,
+			thisSession.UserSlug,
+		)
 
 		return utils.RespondWithError(c, 500, utils.ErrorServer, nil, nil)
 	} else if n := result.RowsAffected; n < 1 {
 		H.logger(
 			c, c.Get("Client-Operation"), "result.RowsAffected < 1", strconv.FormatInt(n, 10), "error",
-			utils.ErrorFailedDB,
+			utils.ErrorFailedDB, thisSession.UserSlug,
 		)
 
 		return utils.RespondWithError(c, 500, utils.ErrorServer, nil, nil)
@@ -116,13 +123,14 @@ func (H Handler) AuthorizeRequest(c *fiber.Ctx) error {
 			if result := H.DBs.ApiGateway.Delete(&session); result.Error != nil {
 				H.logger(
 					c, c.Get("Client-Operation"), result.Error.Error(), "", "error", utils.ErrorFailedDB,
+					thisSession.UserSlug,
 				)
 
 				return utils.RespondWithError(c, 500, utils.ErrorServer, nil, nil)
 			} else if n := result.RowsAffected; n != 1 {
 				H.logger(
 					c, c.Get("Client-Operation"), "result.RowsAffected != 1", strconv.FormatInt(n, 10),
-					"error", utils.ErrorFailedDB,
+					"error", utils.ErrorFailedDB, thisSession.UserSlug,
 				)
 
 				return utils.RespondWithError(c, 500, utils.ErrorServer, nil, nil)
@@ -146,7 +154,7 @@ func (H Handler) AuthorizeRequest(c *fiber.Ctx) error {
 	} else {
 		H.logger(
 			c, c.Get("Client-Operation"), "utils.HashToken(authToken) != thisSession.Digest",
-			"authToken = " + authToken, "error", utils.ErrorToken,
+			"authToken = " + authToken, "error", utils.ErrorToken, thisSession.UserSlug,
 		)
 
 		return utils.RespondWithError(c, 401, utils.ErrorToken, nil, nil)
@@ -157,7 +165,10 @@ func (H Handler) AuthorizeRequest(c *fiber.Ctx) error {
 	for _, privilegedOp := range privilegedOps {
 		if clientOperation == privilegedOp {
 			if password, err := hex.DecodeString(c.Get(H.Conf.PASSWORD_HEADER_KEY)); err != nil {
-				H.logger(c, utils.CreateAccount, err.Error(), "", "error", "Failed decode password")
+				H.logger(
+					c, utils.CreateAccount, err.Error(), "", "error", "Failed decode password",
+					thisSession.UserSlug,
+				)
 
 				return utils.RespondWithError(c, 400, utils.ErrorBadRequest, nil, nil)
 			} else if !utils.CompareHashAndPassword(

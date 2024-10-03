@@ -13,7 +13,7 @@ type MoveSecretRequestBody struct {
 
 func (H Handler) VaultsMoveSecret(c *fiber.Ctx) error {
 	if clientOperation := c.Get("Client-Operation"); clientOperation != utils.MoveSecret {
-		H.logger(c, utils.MoveSecret, clientOperation, "", "warn", utils.ErrorClientOperation)
+		H.logger(c, utils.MoveSecret, clientOperation, "", "warn", utils.ErrorClientOperation, "")
 
 		return utils.RespondWithError(c, 400, utils.ErrorBadRequest, nil, nil)
 	}
@@ -21,7 +21,7 @@ func (H Handler) VaultsMoveSecret(c *fiber.Ctx) error {
 	reqBody := MoveSecretRequestBody{}
 
 	if err := c.BodyParser(&reqBody); err != nil {
-		H.logger(c, utils.MoveSecret, err.Error(), "", "error", utils.ErrorParse)
+		H.logger(c, utils.MoveSecret, err.Error(), "", "error", utils.ErrorParse, "")
 
 		return utils.RespondWithError(c, 400, utils.ErrorBadRequest, nil, nil)
 	}
@@ -39,7 +39,7 @@ func (H Handler) VaultsMoveSecret(c *fiber.Ctx) error {
 	_, _, errString := checkVaultsResponse(agent)
 
 	if errString != "" {
-		H.logger(c, utils.MoveSecret, errString, "", "error", utils.ErrorVaultsMoveSecret)
+		H.logger(c, utils.MoveSecret, errString, "", "error", utils.ErrorVaultsMoveSecret, "")
 
 		return utils.RespondWithError(c, 500, utils.ErrorServer, nil, nil)
 	}

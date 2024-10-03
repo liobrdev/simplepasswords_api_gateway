@@ -8,7 +8,7 @@ import (
 
 func (H Handler) VaultsRetrieveEntry(c *fiber.Ctx) error {
 	if header := c.Get("Client-Operation"); header != utils.RetrieveEntry {
-		H.logger(c, utils.RetrieveEntry, header, "", "warn", utils.ErrorClientOperation)
+		H.logger(c, utils.RetrieveEntry, header, "", "warn", utils.ErrorClientOperation, "")
 
 		return utils.RespondWithError(c, 400, utils.ErrorBadRequest, nil, nil)
 	}
@@ -27,7 +27,7 @@ func (H Handler) VaultsRetrieveEntry(c *fiber.Ctx) error {
 	_, body, errString := checkVaultsResponse(agent)
 
 	if errString != "" {
-		H.logger(c, utils.RetrieveEntry, errString, "", "error", utils.ErrorVaultsRetrieveEntry)
+		H.logger(c, utils.RetrieveEntry, errString, "", "error", utils.ErrorVaultsRetrieveEntry, "")
 
 		return utils.RespondWithError(c, 500, utils.ErrorServer, nil, nil)
 	}

@@ -23,7 +23,7 @@ type AuthSecondFactorResponseBody struct {
 
 func (H Handler) AuthSecondFactor(c *fiber.Ctx) error {
 	if header := c.Get("Client-Operation"); header != utils.AuthSecondFactor {
-		H.logger(c, utils.AuthSecondFactor, header, "", "warn", utils.ErrorClientOperation)
+		H.logger(c, utils.AuthSecondFactor, header, "", "warn", utils.ErrorClientOperation, "")
 
 		return utils.RespondWithError(c, 400, utils.ErrorBadRequest, nil, nil)
 	}
@@ -31,19 +31,19 @@ func (H Handler) AuthSecondFactor(c *fiber.Ctx) error {
 	body := AuthSecondFactorRequestBody{}
 
 	if err := c.BodyParser(&body); err != nil {
-		H.logger(c, utils.AuthSecondFactor, err.Error(), "", "warn", utils.ErrorParse)
+		H.logger(c, utils.AuthSecondFactor, err.Error(), "", "warn", utils.ErrorParse, "")
 
 		return utils.RespondWithError(c, 400, utils.ErrorBadRequest, nil, nil)
 	}
 
 	if len(body.MFAToken) != 80 {
-		H.logger(c, utils.AuthSecondFactor, body.MFAToken, "", "warn", utils.ErrorMFAToken)
+		H.logger(c, utils.AuthSecondFactor, body.MFAToken, "", "warn", utils.ErrorMFAToken, "")
 
 		return utils.RespondWithError(c, 400, utils.ErrorBadRequest, nil, nil)
 	}
 
 	if len(body.PhoneOTP) != 20 {
-		H.logger(c, utils.AuthSecondFactor, body.PhoneOTP, "", "warn", utils.ErrorPhoneOTP)
+		H.logger(c, utils.AuthSecondFactor, body.PhoneOTP, "", "warn", utils.ErrorPhoneOTP, "")
 
 		return utils.RespondWithError(c, 400, utils.ErrorBadRequest, nil, nil)
 	}
@@ -52,7 +52,7 @@ func (H Handler) AuthSecondFactor(c *fiber.Ctx) error {
 
 	if result := H.DBs.ApiGateway.Preload("User").Where("token_key = ?", body.MFAToken[:16]).Limit(1).
 	Find(&mfaToken); result.Error != nil {
-		H.logger(c, utils.AuthSecondFactor, result.Error.Error(), "", "error", utils.ErrorFailedDB)
+		H.logger(c, utils.AuthSecondFactor, result.Error.Error(), "", "error", utils.ErrorFailedDB, "")
 
 		return utils.RespondWithError(c, 400, utils.ErrorAuthenticate, nil, nil)
 	} else if n := result.RowsAffected; n == 0 {
@@ -60,7 +60,7 @@ func (H Handler) AuthSecondFactor(c *fiber.Ctx) error {
 	} else if n != 1 {
 		H.logger(
 			c, utils.AuthSecondFactor, "result.RowsAffected != 1", strconv.FormatInt(n, 10), "error",
-			utils.ErrorFailedDB,
+			utils.ErrorFailedDB, "",
 		)
 
 		return utils.RespondWithError(c, 400, utils.ErrorAuthenticate, nil, nil)
@@ -84,7 +84,10 @@ func (H Handler) AuthSecondFactor(c *fiber.Ctx) error {
 	var err error
 
 	if sessionToken, err = utils.GenerateSlug(80); err != nil {
-		H.logger(c, utils.AuthSecondFactor, err.Error(), "", "error", "Failed generate session token")
+		H.logger(
+			c, utils.AuthSecondFactor, err.Error(), "", "error", "Failed generate session token",
+			mfaToken.UserSlug,
+		)
 
 		return utils.RespondWithError(c, 500, utils.ErrorServer, nil, nil)
 	}
@@ -99,6 +102,7 @@ func (H Handler) AuthSecondFactor(c *fiber.Ctx) error {
 	}); result.Error != nil {
 		H.logger(
 			c, utils.AuthSecondFactor, result.Error.Error(), "", "error", "Failed create client session",
+			mfaToken.UserSlug,
 		)
 
 		return utils.RespondWithError(c, 500, utils.ErrorServer, nil, nil)

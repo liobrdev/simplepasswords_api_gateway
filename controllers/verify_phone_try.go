@@ -8,7 +8,7 @@ import (
 
 func (H Handler) VerifyPhoneTry(c *fiber.Ctx) error {
 	if header := c.Get("Client-Operation"); header != utils.VerifyPhoneTry {
-		H.logger(c, utils.VerifyPhoneTry, header, "", "warn", utils.ErrorClientOperation)
+		H.logger(c, utils.VerifyPhoneTry, header, "", "warn", utils.ErrorClientOperation, "")
 
 		return utils.RespondWithError(c, 400, utils.ErrorBadRequest, nil, nil)
 	}

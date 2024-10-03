@@ -12,7 +12,7 @@ type UpdateVaultRequestBody struct {
 
 func (H Handler) VaultsUpdateVault(c *fiber.Ctx) error {
 	if header := c.Get("Client-Operation"); header != utils.UpdateVault {
-		H.logger(c, utils.UpdateVault, header, "", "warn", utils.ErrorClientOperation)
+		H.logger(c, utils.UpdateVault, header, "", "warn", utils.ErrorClientOperation, "")
 
 		return utils.RespondWithError(c, 400, utils.ErrorBadRequest, nil, nil)
 	}
@@ -20,7 +20,7 @@ func (H Handler) VaultsUpdateVault(c *fiber.Ctx) error {
 	reqBody := UpdateVaultRequestBody{}
 
 	if err := c.BodyParser(&reqBody); err != nil {
-		H.logger(c, utils.UpdateVault, err.Error(), "", "error", utils.ErrorParse)
+		H.logger(c, utils.UpdateVault, err.Error(), "", "error", utils.ErrorParse, "")
 
 		return utils.RespondWithError(c, 400, utils.ErrorBadRequest, nil, nil)
 	}
@@ -38,7 +38,7 @@ func (H Handler) VaultsUpdateVault(c *fiber.Ctx) error {
 	_, _, errString := checkVaultsResponse(agent)
 
 	if errString != "" {
-		H.logger(c, utils.UpdateVault, errString, "", "error", utils.ErrorVaultsUpdateVault)
+		H.logger(c, utils.UpdateVault, errString, "", "error", utils.ErrorVaultsUpdateVault, "")
 
 		return utils.RespondWithError(c, 500, utils.ErrorServer, nil, nil)
 	}

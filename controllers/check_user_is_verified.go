@@ -12,19 +12,23 @@ func (H Handler) CheckUserIsVerified(c *fiber.Ctx) error {
 	var ok bool
 
 	if session, ok = c.UserContext().Value(sessionContextKey{}).(*models.ClientSession); !ok {
-		H.logger(c, c.Get("Client-Operation"), "", "", "error", "Failed session.User context")
+		H.logger(c, c.Get("Client-Operation"), "", "", "error", "Failed session.User context", "")
 
 		return utils.RespondWithError(c, 500, utils.ErrorServer, nil, nil)
 	}
 
 	if !session.User.EmailIsVerified {
-		H.logger(c, c.Get("Client-Operation"), "", "", "error", "User email not verified")
+		H.logger(
+			c, c.Get("Client-Operation"), "", "", "error", "User email not verified", session.UserSlug,
+		)
 
 		return utils.RespondWithError(c, 403, utils.ErrorServer, nil, nil)
 	}
 
 	if !session.User.PhoneIsVerified {
-		H.logger(c, c.Get("Client-Operation"), "", "", "error", "User phone not verified")
+		H.logger(
+			c, c.Get("Client-Operation"), "", "", "error", "User phone not verified", session.UserSlug,
+		)
 
 		return utils.RespondWithError(c, 403, utils.ErrorServer, nil, nil)
 	}

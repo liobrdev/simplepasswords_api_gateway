@@ -18,7 +18,7 @@ type VerifyEmailTryResponseBody struct {
 
 func (H Handler) VerifyEmailTry(c *fiber.Ctx) error {
 	if header := c.Get("Client-Operation"); header != utils.VerifyEmailTry {
-		H.logger(c, utils.VerifyEmailTry, header, "", "warn", utils.ErrorClientOperation)
+		H.logger(c, utils.VerifyEmailTry, header, "", "warn", utils.ErrorClientOperation, "")
 
 		return utils.RespondWithError(c, 400, utils.ErrorBadRequest, nil, nil)
 	}
@@ -27,7 +27,7 @@ func (H Handler) VerifyEmailTry(c *fiber.Ctx) error {
 	var ok bool
 
 	if session, ok = c.UserContext().Value(sessionContextKey{}).(*models.ClientSession); !ok {
-		H.logger(c, utils.VerifyEmailTry, "", "", "error", "Failed session.User context")
+		H.logger(c, utils.VerifyEmailTry, "", "", "error", "Failed session.User context", "")
 
 		return utils.RespondWithError(c, 500, utils.ErrorServer, nil, nil)
 	}
@@ -35,7 +35,7 @@ func (H Handler) VerifyEmailTry(c *fiber.Ctx) error {
 	user := &session.User
 
 	if user.EmailIsVerified {
-		H.logger(c, utils.VerifyEmailTry, "", "", "warn", utils.ErrorAlreadyVerified)
+		H.logger(c, utils.VerifyEmailTry, "", "", "warn", utils.ErrorAlreadyVerified, user.Slug)
 
 		return c.Status(200).JSON(&VerifyEmailTryResponseBody{})
 	}
@@ -45,7 +45,9 @@ func (H Handler) VerifyEmailTry(c *fiber.Ctx) error {
 	// Get all user's email verification tokens for cleanup
 	if result := H.DBs.ApiGateway.Where("user_slug = ?", user.Slug).Find(&emailTokens);
 	result.Error != nil {
-		H.logger(c, utils.VerifyEmailTry, result.Error.Error(), "", "error", utils.ErrorFailedDB)
+		H.logger(
+			c, utils.VerifyEmailTry, result.Error.Error(), "", "error", utils.ErrorFailedDB, user.Slug,
+		)
 	}
 
 	var currentToken *models.EmailVerificationToken
@@ -69,7 +71,7 @@ func (H Handler) VerifyEmailTry(c *fiber.Ctx) error {
 		later := now.Add(time.Duration(10) * time.Minute)
 
 		if later.Sub(currentToken.ExpiresAt).Seconds() < 30 {
-			H.logger(c, utils.VerifyEmailTry, "", "", "warn", "Too soon retry")
+			H.logger(c, utils.VerifyEmailTry, "", "", "warn", "Too soon retry", user.Slug)
 
 			return c.Status(200).JSON(&VerifyEmailTryResponseBody{})
 		} else {
@@ -82,11 +84,11 @@ func (H Handler) VerifyEmailTry(c *fiber.Ctx) error {
 	var err error
 
 	if tokenString, err = utils.GenerateSlug(80); err != nil {
-		H.logger(c, utils.VerifyEmailTry, err.Error(), "", "error", "Failed generate string")
+		H.logger(c, utils.VerifyEmailTry, err.Error(), "", "error", "Failed generate string", user.Slug)
 
 		return utils.RespondWithError(c, 500, utils.ErrorServer, nil, nil)
 	} else if oneTimePasscode, err = utils.GenerateOTP(); err != nil {
-		H.logger(c, utils.VerifyEmailTry, err.Error(), "", "error", "Failed generate otp")
+		H.logger(c, utils.VerifyEmailTry, err.Error(), "", "error", "Failed generate otp", user.Slug)
 
 		return utils.RespondWithError(c, 500, utils.ErrorServer, nil, nil)
 	} else if result := H.DBs.ApiGateway.Create(&models.EmailVerificationToken{
@@ -97,7 +99,9 @@ func (H Handler) VerifyEmailTry(c *fiber.Ctx) error {
 		CreatedAt: now,
 		ExpiresAt: now.Add(time.Duration(10) * time.Minute),
 	}); result.Error != nil {
-		H.logger(c, utils.VerifyEmailTry, result.Error.Error(), "", "error", "Failed create token")
+		H.logger(
+			c, utils.VerifyEmailTry, result.Error.Error(), "", "error", "Failed create token", user.Slug,
+		)
 
 		return utils.RespondWithError(c, 500, utils.ErrorServer, nil, nil)
 	}
@@ -109,12 +113,18 @@ func (H Handler) VerifyEmailTry(c *fiber.Ctx) error {
 		testEmailToken = tokenString
 		testOTP = strings.Join(oneTimePasscode, "")
 	} else if err = H.sendVerificationEmail(user, tokenString, oneTimePasscode); err != nil {
-		H.logger(c, utils.VerifyEmailTry, err.Error(), "", "error", "Failed send verification email")
+		H.logger(
+			c, utils.VerifyEmailTry, err.Error(), "", "error", "Failed send verification email",
+			user.Slug,
+		)
 
 		if result := H.DBs.ApiGateway.Exec(
 			"DELETE FROM email_verification_tokens WHERE token_key = ?", tokenString[:16],
 		); result.Error != nil {
-			H.logger(c, utils.VerifyEmailTry, result.Error.Error(), "", "error", "Failed delete token")
+			H.logger(
+				c, utils.VerifyEmailTry, result.Error.Error(), "", "error", "Failed delete token",
+				user.Slug,
+			)
 		}
 
 		return utils.RespondWithError(c, 500, utils.ErrorServer, nil, nil)
@@ -128,11 +138,14 @@ func (H Handler) VerifyEmailTry(c *fiber.Ctx) error {
 
 func (H Handler) deleteEmailToken(c *fiber.Ctx, token *models.EmailVerificationToken) {
 	if result := H.DBs.ApiGateway.Delete(&token); result.Error != nil {
-		H.logger(c, utils.VerifyEmailTry, result.Error.Error(), "", "error", utils.ErrorFailedDB)
+		H.logger(
+			c, utils.VerifyEmailTry, result.Error.Error(), "", "error", utils.ErrorFailedDB,
+			token.UserSlug,
+		)
 	} else if n := result.RowsAffected; n != 1 {
 		H.logger(
 			c, utils.VerifyEmailTry, "result.RowsAffected != 1", strconv.FormatInt(n, 10), "error",
-			utils.ErrorFailedDB,
+			utils.ErrorFailedDB, token.UserSlug,
 		)
 	}
 }

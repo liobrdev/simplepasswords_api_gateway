@@ -8,7 +8,7 @@ import (
 
 func (H Handler) VerifyEmailConfirm(c *fiber.Ctx) error {
 	if header := c.Get("Client-Operation"); header != utils.VerifyEmailConfirm {
-		H.logger(c, utils.VerifyEmailConfirm, header, "", "warn", utils.ErrorClientOperation)
+		H.logger(c, utils.VerifyEmailConfirm, header, "", "warn", utils.ErrorClientOperation, "")
 
 		return utils.RespondWithError(c, 400, utils.ErrorBadRequest, nil, nil)
 	}

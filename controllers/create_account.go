@@ -26,7 +26,7 @@ type CreateAccountResponseBody struct {
 
 func (H Handler) CreateAccount(c *fiber.Ctx) error {
 	if header := c.Get("Client-Operation"); header != utils.CreateAccount {
-		H.logger(c, utils.CreateAccount, header, "", "warn", utils.ErrorClientOperation)
+		H.logger(c, utils.CreateAccount, header, "", "warn", utils.ErrorClientOperation, "")
 
 		return utils.RespondWithError(c, 400, utils.ErrorBadRequest, nil, nil)
 	}
@@ -34,31 +34,31 @@ func (H Handler) CreateAccount(c *fiber.Ctx) error {
 	body := CreateAccountRequestBody{}
 
 	if err := c.BodyParser(&body); err != nil {
-		H.logger(c, utils.CreateAccount, err.Error(), "", "warn", utils.ErrorParse)
+		H.logger(c, utils.CreateAccount, err.Error(), "", "warn", utils.ErrorParse, "")
 
 		return utils.RespondWithError(c, 400, utils.ErrorBadRequest, nil, nil)
 	}
 
 	if !utils.NameRegexp.Match([]byte(body.Name)) {
-		H.logger(c, utils.CreateAccount, body.Name, "", "warn", utils.ErrorAcctName)
+		H.logger(c, utils.CreateAccount, body.Name, "", "warn", utils.ErrorAcctName, "")
 
 		return utils.RespondWithError(c, 400, utils.ErrorBadRequest, nil, nil)
 	}
 
 	if !utils.EmailRegexp.Match([]byte(body.Email)) {
-		H.logger(c, utils.CreateAccount, body.Email, "", "warn", utils.ErrorAcctEmail)
+		H.logger(c, utils.CreateAccount, body.Email, "", "warn", utils.ErrorAcctEmail, "")
 
 		return utils.RespondWithError(c, 400, utils.ErrorBadRequest, nil, nil)
 	}
 
 	if !utils.PhoneRegexp.Match([]byte(body.Phone)) {
-		H.logger(c, utils.CreateAccount, body.Phone, "", "warn", utils.ErrorAcctPhone)
+		H.logger(c, utils.CreateAccount, body.Phone, "", "warn", utils.ErrorAcctPhone, "")
 
 		return utils.RespondWithError(c, 400, utils.ErrorBadRequest, nil, nil)
 	}
 
 	if body.Password == "" {
-		H.logger(c, utils.CreateAccount, "", "", "warn", utils.ErrorAcctPW)
+		H.logger(c, utils.CreateAccount, "", "", "warn", utils.ErrorAcctPW, "")
 
 		return utils.RespondWithError(c, 400, utils.ErrorBadRequest, nil, nil)
 	}
@@ -66,11 +66,13 @@ func (H Handler) CreateAccount(c *fiber.Ctx) error {
 	var user models.User
 
 	if password, err := hex.DecodeString(body.Password); err != nil {
-		H.logger(c, utils.CreateAccount, err.Error(), "", "error", "Failed decode password")
+		H.logger(c, utils.CreateAccount, err.Error(), "", "error", "Failed decode password", "")
 
 		return utils.RespondWithError(c, 400, utils.ErrorBadRequest, nil, nil)
 	} else if hash, salt, err := utils.GenerateUserCredentials(password); err != nil {
-		H.logger(c, utils.CreateAccount, err.Error(), "", "error", "Failed generate user credentials")
+		H.logger(
+			c, utils.CreateAccount, err.Error(), "", "error", "Failed generate user credentials", "",
+		)
 
 		return utils.RespondWithError(c, 500, utils.ErrorServer, nil, nil)
 	} else {
@@ -79,7 +81,7 @@ func (H Handler) CreateAccount(c *fiber.Ctx) error {
 	}
 
 	if userSlug, err := utils.GenerateSlug(16); err != nil {
-		H.logger(c, utils.CreateAccount, err.Error(), "", "error", "Failed generate user.Slug")
+		H.logger(c, utils.CreateAccount, err.Error(), "", "error", "Failed generate user.Slug", "")
 
 		return utils.RespondWithError(c, 500, utils.ErrorServer, nil, nil)
 	} else {
@@ -122,14 +124,16 @@ func (H Handler) CreateAccount(c *fiber.Ctx) error {
 			return utils.RespondWithError(c, 400, utils.ErrorDiffEmail, nil, nil)
 		}
 
-		H.logger(c, utils.CreateAccount, err.Error(), "", "error", utils.ErrorCreateUser)
+		H.logger(c, utils.CreateAccount, err.Error(), "", "error", utils.ErrorCreateUser, "")
 
 		return utils.RespondWithError(c, 500, utils.ErrorServer, nil, nil)
 	}
 
 	if H.Conf.ENVIRONMENT != "testing" {
 		if errorString := vaultsCreateUser(H.Conf, user.Slug); errorString != "" {
-			H.logger(c, utils.CreateAccount, errorString, "", "error", utils.ErrorVaultsCreateUser)
+			H.logger(
+				c, utils.CreateAccount, errorString, "", "error", utils.ErrorVaultsCreateUser, user.Slug,
+			)
 
 			return utils.RespondWithError(c, 500, utils.ErrorServer, nil, nil)
 		}

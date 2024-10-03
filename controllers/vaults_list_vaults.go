@@ -9,7 +9,7 @@ import (
 
 func (H Handler) VaultsListVaults(c *fiber.Ctx) error {
 	if header := c.Get("Client-Operation"); header != utils.ListVaults {
-		H.logger(c, utils.ListVaults, header, "", "warn", utils.ErrorClientOperation)
+		H.logger(c, utils.ListVaults, header, "", "warn", utils.ErrorClientOperation, "")
 
 		return utils.RespondWithError(c, 400, utils.ErrorBadRequest, nil, nil)
 	}
@@ -18,7 +18,7 @@ func (H Handler) VaultsListVaults(c *fiber.Ctx) error {
 	var ok bool
 
 	if session, ok = c.UserContext().Value(sessionContextKey{}).(*models.ClientSession); !ok {
-		H.logger(c, utils.ListVaults, "", "", "error", "Failed session.User context")
+		H.logger(c, utils.ListVaults, "", "", "error", "Failed session.User context", "")
 
 		return utils.RespondWithError(c, 500, utils.ErrorServer, nil, nil)
 	}
@@ -27,12 +27,14 @@ func (H Handler) VaultsListVaults(c *fiber.Ctx) error {
 	agent.Set("Content-Type", "application/json")
 	agent.Set("Client-Operation", utils.ListVaults)
 	agent.Set("Authorization", "Token " + H.Conf.VAULTS_ACCESS_TOKEN)
-	agent.Set("User-Slug", session.UserSlug )
+	agent.Set("User-Slug", session.UserSlug)
 
 	_, body, errString := checkVaultsResponse(agent)
 
 	if errString != "" {
-		H.logger(c, utils.ListVaults, errString, "", "error", utils.ErrorVaultsListVaults)
+		H.logger(
+			c, utils.ListVaults, errString, "", "error", utils.ErrorVaultsListVaults, session.UserSlug,
+		)
 
 		return utils.RespondWithError(c, 500, utils.ErrorServer, nil, nil)
 	}
