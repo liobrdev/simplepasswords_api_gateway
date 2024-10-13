@@ -79,40 +79,51 @@ func (H Handler) AuthFirstFactor(c *fiber.Ctx) error {
 		return utils.RespondWithError(c, 400, utils.ErrorFailedLogin, nil, nil)
 	}
 
-	var userAllMFATokens []models.MFAToken
+	var mfaTokens []models.MFAToken
 
-	// Get all user's MFA tokens for cleanup
-	if result := H.DBs.ApiGateway.Where("user_slug = ?", user.Slug).Find(&userAllMFATokens);
+	// Get all user's mfa tokens for cleanup
+	if result := H.DBs.ApiGateway.Where("user_slug = ?", user.Slug).Find(&mfaTokens);
 	result.Error != nil {
 		H.logger(
 			c, utils.AuthFirstFactor, result.Error.Error(), "", "error", utils.ErrorFailedDB, user.Slug,
 		)
 	}
 
+	var currentToken *models.MFAToken
 	now := time.Now().UTC()
 
-	// Clean up expired MFA tokens
-	for _, token := range userAllMFATokens {
+	// Clean up expired mfa tokens
+	for _, token := range mfaTokens {
 		if !token.ExpiresAt.After(now) {
-			if result := H.DBs.ApiGateway.Delete(&token); result.Error != nil {
-				H.logger(
-					c, utils.AuthFirstFactor, result.Error.Error(), "", "error", utils.ErrorFailedDB,
-					user.Slug,
-				)
-			} else if n := result.RowsAffected; n != 1 {
-				H.logger(
-					c, utils.AuthFirstFactor, "result.RowsAffected != 1", strconv.FormatInt(n, 10),
-					"error", utils.ErrorFailedDB, user.Slug,
-				)
-			}
+			H.deleteMfaToken(c, &token)
+		} else if currentToken == nil {
+			currentToken = &token
+		} else if !token.ExpiresAt.Before(currentToken.ExpiresAt) {
+			H.deleteMfaToken(c, currentToken)
+			currentToken = &token
+		} else {
+			H.deleteMfaToken(c, &token)
 		}
 	}
 
-	var mfaTokenString	string
+	if currentToken != nil {
+		later := now.Add(time.Duration(5) * time.Minute)
+
+		if later.Sub(currentToken.ExpiresAt).Seconds() < 30 {
+			H.logger(c, utils.AuthFirstFactor, "", "", "warn", "Too soon retry", user.Slug)
+			time.Sleep(time.Second)
+
+			return c.Status(200).JSON(&AuthFirstFactorRequestBody{})
+		} else {
+			H.deleteMfaToken(c, currentToken)
+		}
+	}
+
+	var tokenString	string
 	var oneTimePasscode []string
 	var err error
 
-	if mfaTokenString, err = utils.GenerateSlug(80); err != nil {
+	if tokenString, err = utils.GenerateSlug(80); err != nil {
 		H.logger(
 			c, utils.AuthFirstFactor, err.Error(), "", "error", "Failed generate mfa string", user.Slug,
 		)
@@ -124,9 +135,9 @@ func (H Handler) AuthFirstFactor(c *fiber.Ctx) error {
 		return utils.RespondWithError(c, 500, utils.ErrorServer, nil, nil)
 	} else if result := H.DBs.ApiGateway.Create(&models.MFAToken{
 		UserSlug:  user.Slug,
-		KeyDigest: utils.HashToken(mfaTokenString),
+		KeyDigest: utils.HashToken(tokenString),
 		OTPDigest: utils.HashToken(strings.Join(oneTimePasscode, "")),
-		TokenKey:  mfaTokenString[:16],
+		TokenKey:  tokenString[:16],
 		CreatedAt: now,
 		ExpiresAt: now.Add(time.Duration(5) * time.Minute),
 	}); result.Error != nil {
@@ -148,7 +159,7 @@ func (H Handler) AuthFirstFactor(c *fiber.Ctx) error {
 		H.logger(c, utils.AuthFirstFactor, err.Error(), "", "error", "Failed send sms otp", user.Slug)
 
 		if result := H.DBs.ApiGateway.Exec(
-			"DELETE FROM mfa_tokens WHERE token_key = ?", mfaTokenString[:16],
+			"DELETE FROM mfa_tokens WHERE token_key = ?", tokenString[:16],
 		); result.Error != nil {
 			H.logger(
 				c, utils.AuthFirstFactor, result.Error.Error(), "", "error", "Failed delete mfa token",
@@ -160,7 +171,21 @@ func (H Handler) AuthFirstFactor(c *fiber.Ctx) error {
 	}
 
 	return c.Status(200).JSON(&AuthFirstFactorResponseBody{
-		MFAToken: mfaTokenString,
+		MFAToken: tokenString,
 		TestOTP: 	testOTP,
 	})
+}
+
+func (H Handler) deleteMfaToken(c *fiber.Ctx, token *models.MFAToken) {
+	if result := H.DBs.ApiGateway.Delete(&token); result.Error != nil {
+		H.logger(
+			c, utils.AuthFirstFactor, result.Error.Error(), "", "error", utils.ErrorFailedDB,
+			token.UserSlug,
+		)
+	} else if n := result.RowsAffected; n != 1 {
+		H.logger(
+			c, utils.AuthFirstFactor, "result.RowsAffected != 1", strconv.FormatInt(n, 10), "error",
+			utils.ErrorFailedDB, token.UserSlug,
+		)
+	}
 }

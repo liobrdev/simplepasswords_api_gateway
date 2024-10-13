@@ -286,11 +286,28 @@ func testAuthFirstFactor(
 	})
 
 	t.Run("valid_body_200_ok", func(t *testing.T) {
+		user := setup.SetUpApiGatewayWithData(t, dbs)
+		setup.CreateValidTestMFATokens(&user, t, dbs)
+		setup.CreateExpiredTestMFATokens(&user, t, dbs)
 		body := fmt.Sprintf(bodyFmt, helpers.VALID_EMAIL_1, helpers.HexHash1)
 		testAuthFirstFactorSuccess(t, app, dbs, utils.AuthFirstFactor, body)
+		testAuthFirstFactorClientError(
+			t, app, dbs, utils.AuthFirstFactor, body, 200, "", nil, nil, &models.Log{
+				ClientIP:        clientIP,
+				ClientOperation: utils.AuthFirstFactor,
+				Detail:          "",
+				Level:           "warn",
+				Message:         "Too soon retry",
+				RequestBody:     body,
+				UserSlug: 			 user.Slug,
+			},
+		)
 	})
 
 	t.Run("valid_body_irrelevant_data_200_ok", func(t *testing.T) {
+		user := setup.SetUpApiGatewayWithData(t, dbs)
+		setup.CreateValidTestMFATokens(&user, t, dbs)
+		setup.CreateExpiredTestMFATokens(&user, t, dbs)
 		validBodyIrrelevantData := fmt.Sprintf(
 			`{"email":"%s","password":"%s","abc":123}`, helpers.VALID_EMAIL_1, helpers.HexHash1,
 		)
@@ -322,10 +339,6 @@ func testAuthFirstFactorClientError(
 func testAuthFirstFactorSuccess(
 	t *testing.T, app *fiber.App, dbs *databases.Databases, clientOperation, body string,
 ) {
-	user := setup.SetUpApiGatewayWithData(t, dbs)
-	setup.CreateValidTestMFATokens(&user, t, dbs)
-	setup.CreateExpiredTestMFATokens(&user, t, dbs)
-
 	var mfaTokenCount int64
 	helpers.CountMFATokens(t, dbs.ApiGateway, &mfaTokenCount)
 	require.EqualValues(t, 4, mfaTokenCount)
@@ -334,7 +347,7 @@ func testAuthFirstFactorSuccess(
 	require.Equal(t, 200, resp.StatusCode)
 
 	helpers.CountMFATokens(t, dbs.ApiGateway, &mfaTokenCount)
-	require.EqualValues(t, 3, mfaTokenCount)
+	require.EqualValues(t, 1, mfaTokenCount)
 
 	if respBody, err := io.ReadAll(resp.Body); err != nil {
 		t.Fatalf("Read response body failed: %s", err.Error())
